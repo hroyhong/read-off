@@ -13,13 +13,15 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ initialData }: DashboardProps) {
-  const [currentSimulatedMonth, setCurrentSimulatedMonth] = useState<number>(() => {
+  const getInitialCurrentTimeMonth = () => {
     if (typeof window === "undefined") return 1;
     const raw = window.localStorage.getItem("read-off:current-time-month");
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 && n <= 12 ? n : 1;
-  });
-  const [activeMonth, setActiveMonth] = useState(1);
+  };
+
+  const [currentSimulatedMonth, setCurrentSimulatedMonth] = useState<number>(() => getInitialCurrentTimeMonth());
+  const [activeMonth, setActiveMonth] = useState<number>(() => getInitialCurrentTimeMonth());
 
   // 记住“当前时间”选择（仅本地偏好，不进 KV）
   useEffect(() => {
