@@ -64,7 +64,6 @@ export function normalizeDBInPlace(db: DB) {
 
   for (const player of ["player1", "player2"] as const) {
     if (!db[player]) {
-      // @ts-expect-error best-effort repair if malformed JSON
       db[player] = { name: player === "player1" ? "我" : "朋友", months: {} };
     }
     if (!db[player].months) db[player].months = {};
