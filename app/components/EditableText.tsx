@@ -11,12 +11,8 @@ interface EditableTextProps {
 
 export function EditableText({ initialValue, onSave, placeholder, className }: EditableTextProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(initialValue ?? "");
+  const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setValue(initialValue ?? "");
-  }, [initialValue]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -26,7 +22,7 @@ export function EditableText({ initialValue, onSave, placeholder, className }: E
 
   const handleBlur = () => {
     setIsEditing(false);
-    const next = (value ?? "").trim();
+    const next = (draft ?? "").trim();
     const prev = (initialValue ?? "").trim();
     // 把“纯空白”当成空值，避免出现 data.json 里 title 是 " " 导致无法编辑/无占位符
     if (next !== prev) onSave(next);
@@ -42,8 +38,8 @@ export function EditableText({ initialValue, onSave, placeholder, className }: E
     return (
       <input
         ref={inputRef}
-        value={value ?? ""}
-        onChange={(e) => setValue(e.target.value)}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         className={`bg-transparent border-b border-black/10 w-full ${className}`}
@@ -52,15 +48,18 @@ export function EditableText({ initialValue, onSave, placeholder, className }: E
     );
   }
 
-  const display = (value ?? "").trim();
+  const display = (initialValue ?? "").trim();
   const isEmpty = display.length === 0;
 
   return (
     <div 
-      onClick={() => setIsEditing(true)} 
+      onClick={() => {
+        setDraft(initialValue ?? "");
+        setIsEditing(true);
+      }} 
       className={`cursor-pointer hover:bg-gray-50 rounded px-1 -mx-1 truncate ${isEmpty ? "text-gray-300" : ""} ${className}`}
     >
-      {isEmpty ? placeholder : value}
+      {isEmpty ? placeholder : initialValue}
     </div>
   );
 }

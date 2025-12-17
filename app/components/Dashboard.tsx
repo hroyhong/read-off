@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useOptimistic, startTransition } from "react";
+import { startTransition, useOptimistic, useState } from "react";
 import { EditableText } from "./EditableText";
-import { updateBookTitle, updateBookAuthor, toggleBookStatus, updateName, type DB } from "../actions";
+import { updateBookAuthor, updateBookTitle, updateName, toggleBookStatus } from "../actions";
+import type { DB } from "../lib/model";
 
 const PENALTY_PER_BOOK = 500;
-const CURRENT_YEAR = new Date().getFullYear();
 const TARGET_YEAR = 2026;
 
 interface DashboardProps {
