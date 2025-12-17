@@ -2,12 +2,22 @@
   "player1": {
     "name": "洪浩善",
     "months": {
+      "0": {
+        "books": [
+          {
+            "id": "x9byri",
+            "title": "",
+            "completed": false
+          }
+        ],
+        "switches": 0
+      },
       "1": {
         "books": [
           {
             "id": "je3ufc",
             "title": " ",
-            "completed": false
+            "completed": true
           }
         ],
         "switches": 0
@@ -277,12 +287,22 @@
   "player2": {
     "name": "王昊天",
     "months": {
+      "0": {
+        "books": [
+          {
+            "id": "4e6w4c",
+            "title": "",
+            "completed": false
+          }
+        ],
+        "switches": 0
+      },
       "1": {
         "books": [
           {
             "id": "530fh",
-            "title": "adf ",
-            "completed": true
+            "title": "",
+            "completed": false
           }
         ],
         "switches": 0

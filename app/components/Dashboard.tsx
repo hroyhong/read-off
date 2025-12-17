@@ -13,7 +13,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ initialData }: DashboardProps) {
-  // 模拟的"当前月份"状态，默认为1月。0 表示 "2025年12月 (未开始)"
+  // 模拟的"当前时间"状态，默认为1月。0 表示 "2025年12月"
   const [currentSimulatedMonth, setCurrentSimulatedMonth] = useState(1);
   const [activeMonth, setActiveMonth] = useState(1);
   const data = initialData; 
@@ -26,8 +26,9 @@ export default function Dashboard({ initialData }: DashboardProps) {
 
     Object.entries(data[player].months).forEach(([m, monthData]) => {
       const monthInt = parseInt(m);
-      
-      // 这里的逻辑改为：如果当前模拟月份已经包含或超过了该月，则计算罚款
+      if (monthInt === 0) return; // 0月是测试月，不计入罚款和总进度统计
+
+      // 这里的逻辑改为：如果当前时间已经包含或超过了该月，则计算罚款
       // 如果 currentSimulatedMonth 是 0 (2025年12月)，则不计算任何罚款
       const shouldCalculatePenalty = currentSimulatedMonth > 0 && monthInt <= currentSimulatedMonth;
 
@@ -56,25 +57,36 @@ export default function Dashboard({ initialData }: DashboardProps) {
     if (!monthData) return null;
 
     // 是否显示本月罚款信息
-    const showPenalty = currentSimulatedMonth > 0 && activeMonth <= currentSimulatedMonth;
+    // 0月不需要显示罚款
+    const showPenalty = activeMonth > 0 && currentSimulatedMonth > 0 && activeMonth <= currentSimulatedMonth;
     const missedBooks = monthData.books.length - monthData.books.filter(b => b.completed).length;
 
     return (
       <div className="space-y-3">
         {monthData.books.map((book, index) => (
           <div key={book.id || index} className="group flex items-center gap-3 text-sm">
-            <button
-              onClick={() => toggleBookStatus(player, activeMonth, index)}
-              className={`flex-shrink-0 w-5 h-5 rounded-full border transition-colors flex items-center justify-center cursor-pointer
-                ${book.completed 
-                  ? 'bg-black border-black text-white hover:bg-black/80' 
-                  : 'border-gray-300 hover:border-black'
-                }`}
-              // 移除 disabled，允许随时勾选。没有书名时勾选也可以，反正用户可以随时补书名。
-            >
-              {book.completed && "✓"}
-            </button>
-            <div className={`flex-grow ${book.completed ? 'line-through text-gray-400' : ''}`}>
+            {/* 使用原生 checkbox 配合样式，保证可靠性 */}
+            <label className="flex items-center justify-center w-5 h-5 cursor-pointer relative">
+              <input
+                type="checkbox"
+                checked={book.completed}
+                onChange={() => toggleBookStatus(player, activeMonth, index)}
+                className="peer appearance-none w-5 h-5 border border-gray-300 rounded-full checked:bg-black checked:border-black transition-colors cursor-pointer"
+              />
+              <svg 
+                className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity"
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="3" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </label>
+            
+            <div className={`flex-grow transition-colors ${book.completed ? 'line-through text-gray-400' : ''}`}>
               <EditableText
                 initialValue={book.title}
                 onSave={(val) => updateBookTitle(player, activeMonth, index, val)}
@@ -86,14 +98,19 @@ export default function Dashboard({ initialData }: DashboardProps) {
         
         <div className="pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
             <span>
-              {showPenalty && missedBooks > 0 
-                ? `本月罚款: ¥${missedBooks * PENALTY_PER_BOOK}`
-                : "尚未结算"}
+              {activeMonth === 0 ? "本月为测试月，无罚款" : 
+                showPenalty && missedBooks > 0 
+                  ? `本月罚款: ¥${missedBooks * PENALTY_PER_BOOK}`
+                  : "尚未结算"
+              }
             </span>
         </div>
       </div>
     );
   };
+
+  // 生成月份列表：0, 1, ..., 12
+  const monthList = [0, ...Array.from({length: 12}, (_, i) => i + 1)];
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-gray-100">
@@ -107,7 +124,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
           </div>
           <div className="flex flex-col items-end gap-1">
              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <span>当前模拟时间:</span>
+                <span>当前时间:</span>
                 <select 
                   value={currentSimulatedMonth}
                   onChange={(e) => setCurrentSimulatedMonth(parseInt(e.target.value))}
@@ -181,23 +198,25 @@ export default function Dashboard({ initialData }: DashboardProps) {
         {/* Month Navigation */}
         <div className="mb-10 overflow-x-auto no-scrollbar">
           <div className="flex gap-6 min-w-max pb-2">
-            {Object.keys(data.player1.months).map((m) => {
-              const month = parseInt(m);
+            {monthList.map((m) => {
+              const month = m;
               const isActive = activeMonth === month;
               
-              // 模拟时间过去的月份稍微暗一点，表示已经结算
-              const isPast = currentSimulatedMonth > 0 && month < currentSimulatedMonth;
+              const isPast = month < currentSimulatedMonth;
               const isCurrent = month === currentSimulatedMonth;
+              
+              // 0月特殊显示为"12月"或"预热"
+              const displayMonth = month === 0 ? "25年12月" : `${month}月`;
               
               return (
                 <button
                   key={m}
                   onClick={() => setActiveMonth(month)}
-                  className={`text-sm transition-colors relative py-1
+                  className={`text-sm transition-colors relative py-1 px-2 whitespace-nowrap
                     ${isActive ? 'text-black font-medium' : isPast ? 'text-gray-600' : isCurrent ? 'text-black' : 'text-gray-400 hover:text-gray-600'}
                   `}
                 >
-                  {month}月
+                  {displayMonth}
                   {isCurrent && !isActive && (
                     <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-black" />
                   )}

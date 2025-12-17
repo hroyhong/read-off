@@ -7,7 +7,9 @@ import { revalidatePath } from "next/cache";
 const DB_PATH = path.join(process.cwd(), "data.json");
 
 // 默认月份配置
+// 0 代表 2025年12月
 const MONTHLY_TARGETS: Record<number, number> = {
+  0: 1, // 2025年12月，1本
   1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 4, 
   7: 4, 8: 4, 9: 4, 10: 4, 11: 4, 12: 4
 };
@@ -56,12 +58,11 @@ export async function getData(): Promise<DB> {
     const data = await fs.readFile(DB_PATH, "utf-8");
     const db = JSON.parse(data) as DB;
     
-    // 确保数据结构完整（补全当前月份的数据）
-    const currentMonth = new Date().getMonth() + 1;
     let changed = false;
 
     // 预填充到12月的数据结构，方便查看
-    for (let m = 1; m <= 12; m++) {
+    // 注意：现在我们从 0 开始
+    for (let m = 0; m <= 12; m++) {
         if (!db.player1.months[m]) {
             ensureMonthData(db.player1, m);
             changed = true;
@@ -97,8 +98,6 @@ export async function updateBookTitle(player: "player1" | "player2", month: numb
   const monthKey = month.toString();
   
   if (db[player].months[monthKey]?.books[bookIndex]) {
-    // 如果之前有书名且现在改了，算换书吗？
-    // 简单起见，这里只更新名字。换书单独作为一个动作。
     db[player].months[monthKey].books[bookIndex].title = title;
     await saveData(db);
     revalidatePath("/");
@@ -112,12 +111,10 @@ export async function toggleBookStatus(player: "player1" | "player2", month: num
   
   if (db[player].months[monthKey]?.books[bookIndex]) {
     const book = db[player].months[monthKey].books[bookIndex];
-    // 只有有书名才能标记完成
-    if (book.title.trim()) {
-      book.completed = !book.completed;
-      await saveData(db);
-      revalidatePath("/");
-    }
+    // 移除书名检查，允许随时勾选
+    book.completed = !book.completed;
+    await saveData(db);
+    revalidatePath("/");
   }
 }
 
@@ -140,4 +137,3 @@ export async function updateName(player: "player1" | "player2", name: string) {
     await saveData(db);
     revalidatePath("/");
 }
-
