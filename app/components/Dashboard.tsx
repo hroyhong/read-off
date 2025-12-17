@@ -13,7 +13,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ initialData }: DashboardProps) {
-  // 模拟的"当前月份"状态，默认为1月
+  // 模拟的"当前月份"状态，默认为1月。0 表示 "2025年12月 (未开始)"
   const [currentSimulatedMonth, setCurrentSimulatedMonth] = useState(1);
   const [activeMonth, setActiveMonth] = useState(1);
   const data = initialData; 
@@ -28,7 +28,8 @@ export default function Dashboard({ initialData }: DashboardProps) {
       const monthInt = parseInt(m);
       
       // 这里的逻辑改为：如果当前模拟月份已经包含或超过了该月，则计算罚款
-      const shouldCalculatePenalty = monthInt <= currentSimulatedMonth;
+      // 如果 currentSimulatedMonth 是 0 (2025年12月)，则不计算任何罚款
+      const shouldCalculatePenalty = currentSimulatedMonth > 0 && monthInt <= currentSimulatedMonth;
 
       const target = monthData.books.length;
       const completed = monthData.books.filter(b => b.completed).length;
@@ -55,7 +56,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
     if (!monthData) return null;
 
     // 是否显示本月罚款信息
-    const showPenalty = activeMonth <= currentSimulatedMonth;
+    const showPenalty = currentSimulatedMonth > 0 && activeMonth <= currentSimulatedMonth;
     const missedBooks = monthData.books.length - monthData.books.filter(b => b.completed).length;
 
     return (
@@ -69,7 +70,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
                   ? 'bg-black border-black text-white hover:bg-black/80' 
                   : 'border-gray-300 hover:border-black'
                 }`}
-              disabled={!book.title} // 只有有书名才能点击
+              // 移除 disabled，允许随时勾选。没有书名时勾选也可以，反正用户可以随时补书名。
             >
               {book.completed && "✓"}
             </button>
@@ -110,10 +111,12 @@ export default function Dashboard({ initialData }: DashboardProps) {
                 <select 
                   value={currentSimulatedMonth}
                   onChange={(e) => setCurrentSimulatedMonth(parseInt(e.target.value))}
-                  className="bg-transparent border-b border-gray-200 text-black font-medium focus:outline-none cursor-pointer"
+                  className="bg-transparent border-b border-gray-200 text-black font-medium focus:outline-none cursor-pointer text-right min-w-[100px]"
                 >
+                  <option value={0}>25年12月 (预热)</option>
+                  <option disabled>──────────</option>
                   {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                    <option key={m} value={m}>{m}月</option>
+                    <option key={m} value={m}>26年 {m}月</option>
                   ))}
                 </select>
              </div>
@@ -183,7 +186,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
               const isActive = activeMonth === month;
               
               // 模拟时间过去的月份稍微暗一点，表示已经结算
-              const isPast = month < currentSimulatedMonth;
+              const isPast = currentSimulatedMonth > 0 && month < currentSimulatedMonth;
               const isCurrent = month === currentSimulatedMonth;
               
               return (
