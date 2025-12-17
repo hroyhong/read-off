@@ -7,7 +7,8 @@
           {
             "id": "x9byri",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -16,8 +17,9 @@
         "books": [
           {
             "id": "je3ufc",
-            "title": " ",
-            "completed": true
+            "title": "",
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -27,12 +29,14 @@
           {
             "id": "7ad1a",
             "title": "",
-            "completed": true
+            "completed": false,
+            "author": ""
           },
           {
             "id": "rth3jj",
             "title": "",
-            "completed": true
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -42,17 +46,20 @@
           {
             "id": "y8a6v",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "3fb199",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "4bot8r",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -62,22 +69,26 @@
           {
             "id": "isi3mt",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "cpuam7",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "0dd5hb",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "ybbfh",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -87,22 +98,26 @@
           {
             "id": "u2c4vj",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "5h4vz3",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "qhxb3q",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "qfq3ot",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -112,22 +127,26 @@
           {
             "id": "9wrw1o",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "kbdjro",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "x1m7a",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "gyj59",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -137,22 +156,26 @@
           {
             "id": "h3ng6v",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "1nwvef",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "awv05",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "jqc7ai",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -162,22 +185,26 @@
           {
             "id": "c8oe4",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "qrt9j8",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "s4091n",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "5785r4",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -187,22 +214,26 @@
           {
             "id": "afz4ts",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "aiq0of",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "h06cy",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "g2zxci",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -212,22 +243,26 @@
           {
             "id": "38okaa",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "lxwkxc",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "03z5sd",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "99p8r",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -237,22 +272,26 @@
           {
             "id": "c5cvsb",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "mui4ff",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "70z78f",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "l8wepq",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -262,22 +301,26 @@
           {
             "id": "hq40yh",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "m57ylf",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "pcoxz7",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "60bvk",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -292,7 +335,8 @@
           {
             "id": "4e6w4c",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -302,7 +346,8 @@
           {
             "id": "530fh",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -312,12 +357,14 @@
           {
             "id": "sz225d",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "4p06r",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -327,17 +374,20 @@
           {
             "id": "9kyjlh",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "cuc0v9",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "4b2ejs",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -347,22 +397,26 @@
           {
             "id": "r2zvz",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "cmt0pb",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "2g6yq",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "jolqv",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -372,22 +426,26 @@
           {
             "id": "5mus5g",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "566oqm",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "nymza",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "0ixo5l",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -397,22 +455,26 @@
           {
             "id": "3q7goa",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "3lj3zg",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "nw09o7",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "4tz0q",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -422,22 +484,26 @@
           {
             "id": "400hk",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "yyivtr",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "jboibe",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "tg4wxb",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -447,22 +513,26 @@
           {
             "id": "qezxf",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "y3btqm",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "8txeta",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "hswcnr",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -472,22 +542,26 @@
           {
             "id": "d7g63",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "o2aw3j",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "w9vq2l",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "xlf4yv",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -497,22 +571,26 @@
           {
             "id": "rrbnj",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "ikyh98",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "u39ann",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "npr3bf",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -522,22 +600,26 @@
           {
             "id": "5zom4c",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "w9yg9s",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "on9e8d",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "ib5val",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0
@@ -547,22 +629,26 @@
           {
             "id": "pbr57j",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "sfpktc",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "29id7",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           },
           {
             "id": "m349vi",
             "title": "",
-            "completed": false
+            "completed": false,
+            "author": ""
           }
         ],
         "switches": 0

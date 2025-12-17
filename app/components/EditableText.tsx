@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface EditableTextProps {
   initialValue: string;
@@ -11,11 +11,11 @@ interface EditableTextProps {
 
 export function EditableText({ initialValue, onSave, placeholder, className }: EditableTextProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(initialValue);
+  const [value, setValue] = useState(initialValue ?? "");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setValue(initialValue);
+    setValue(initialValue ?? "");
   }, [initialValue]);
 
   useEffect(() => {
@@ -26,9 +26,10 @@ export function EditableText({ initialValue, onSave, placeholder, className }: E
 
   const handleBlur = () => {
     setIsEditing(false);
-    if (value !== initialValue) {
-      onSave(value);
-    }
+    const next = (value ?? "").trim();
+    const prev = (initialValue ?? "").trim();
+    // 把“纯空白”当成空值，避免出现 data.json 里 title 是 " " 导致无法编辑/无占位符
+    if (next !== prev) onSave(next);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -41,7 +42,7 @@ export function EditableText({ initialValue, onSave, placeholder, className }: E
     return (
       <input
         ref={inputRef}
-        value={value}
+        value={value ?? ""}
         onChange={(e) => setValue(e.target.value)}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
@@ -51,12 +52,15 @@ export function EditableText({ initialValue, onSave, placeholder, className }: E
     );
   }
 
+  const display = (value ?? "").trim();
+  const isEmpty = display.length === 0;
+
   return (
     <div 
       onClick={() => setIsEditing(true)} 
-      className={`cursor-pointer hover:bg-gray-50 rounded px-1 -mx-1 truncate ${!value ? 'text-gray-300' : ''} ${className}`}
+      className={`cursor-pointer hover:bg-gray-50 rounded px-1 -mx-1 truncate ${isEmpty ? "text-gray-300" : ""} ${className}`}
     >
-      {value || placeholder}
+      {isEmpty ? placeholder : value}
     </div>
   );
 }

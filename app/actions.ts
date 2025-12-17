@@ -18,6 +18,7 @@ const MONTHLY_TARGETS: Record<number, number> = {
 export type Book = {
   id: string;
   title: string;
+  author?: string; // 新增作者字段，可选
   completed: boolean;
 };
 
@@ -44,10 +45,21 @@ function ensureMonthData(playerData: PlayerData, month: number) {
       books: Array.from({ length: MONTHLY_TARGETS[month] }).map(() => ({
         id: Math.random().toString(36).substring(7),
         title: "",
+        author: "",
         completed: false
       })),
       switches: 0
     };
+  } else {
+    // 确保所有书都有 id 和 author
+    // 这是为了修复旧数据可能缺少字段的问题
+    playerData.months[monthKey].books = playerData.months[monthKey].books.map((book) => ({
+      ...book,
+      // 兼容旧数据：title 可能是 " "（纯空白），会导致前端占位符不显示且难以点击
+      title: typeof book.title === "string" && book.title.trim().length > 0 ? book.title : "",
+      author: typeof book.author === "string" && book.author.trim().length > 0 ? book.author : "",
+      id: book.id || Math.random().toString(36).substring(7),
+    }));
   }
   return playerData;
 }
@@ -63,14 +75,16 @@ export async function getData(): Promise<DB> {
     // 预填充到12月的数据结构，方便查看
     // 注意：现在我们从 0 开始
     for (let m = 0; m <= 12; m++) {
-        if (!db.player1.months[m]) {
-            ensureMonthData(db.player1, m);
-            changed = true;
-        }
-        if (!db.player2.months[m]) {
-            ensureMonthData(db.player2, m);
-            changed = true;
-        }
+        // 这里需要更严谨：不仅是 month key 不存在，如果数据结构不完整也要修复
+        // ensureMonthData 会处理这两种情况
+        
+        // 我们需要重新赋值给 db 对象，因为 ensureMonthData 可能会修改内部对象但返回的是 playerData 引用
+        // 其实引用修改就够了，但为了明确逻辑：
+        ensureMonthData(db.player1, m);
+        ensureMonthData(db.player2, m);
+        
+        // 实际上每次都保存可能性能不好，但这里是本地文件，且为了确保数据结构更新
+        changed = true;
     }
     
     if (changed) {
@@ -98,7 +112,19 @@ export async function updateBookTitle(player: "player1" | "player2", month: numb
   const monthKey = month.toString();
   
   if (db[player].months[monthKey]?.books[bookIndex]) {
-    db[player].months[monthKey].books[bookIndex].title = title;
+    db[player].months[monthKey].books[bookIndex].title = (title ?? "").trim();
+    await saveData(db);
+    revalidatePath("/");
+  }
+}
+
+// Action: 更新作者
+export async function updateBookAuthor(player: "player1" | "player2", month: number, bookIndex: number, author: string) {
+  const db = await getData();
+  const monthKey = month.toString();
+  
+  if (db[player].months[monthKey]?.books[bookIndex]) {
+    db[player].months[monthKey].books[bookIndex].author = (author ?? "").trim();
     await saveData(db);
     revalidatePath("/");
   }
@@ -113,18 +139,6 @@ export async function toggleBookStatus(player: "player1" | "player2", month: num
     const book = db[player].months[monthKey].books[bookIndex];
     // 移除书名检查，允许随时勾选
     book.completed = !book.completed;
-    await saveData(db);
-    revalidatePath("/");
-  }
-}
-
-// Action: 记录换书
-export async function incrementSwitch(player: "player1" | "player2", month: number) {
-  const db = await getData();
-  const monthKey = month.toString();
-  
-  if (db[player].months[monthKey]) {
-    db[player].months[monthKey].switches += 1;
     await saveData(db);
     revalidatePath("/");
   }
