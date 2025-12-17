@@ -6,7 +6,7 @@
         "books": [
           {
             "id": "je3ufc",
-            "title": "",
+            "title": " ",
             "completed": false
           }
         ],
@@ -281,8 +281,8 @@
         "books": [
           {
             "id": "530fh",
-            "title": "",
-            "completed": false
+            "title": "adf ",
+            "completed": true
           }
         ],
         "switches": 0

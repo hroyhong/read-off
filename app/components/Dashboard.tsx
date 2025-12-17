@@ -13,9 +13,9 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ initialData }: DashboardProps) {
-  // 如果当前年份小于目标年份，默认显示1月，否则显示当前月份
-  const defaultMonth = CURRENT_YEAR < TARGET_YEAR ? 1 : new Date().getMonth() + 1;
-  const [activeMonth, setActiveMonth] = useState(defaultMonth);
+  // 模拟的"当前月份"状态，默认为1月
+  const [currentSimulatedMonth, setCurrentSimulatedMonth] = useState(1);
+  const [activeMonth, setActiveMonth] = useState(1);
   const data = initialData; 
 
   // 计算逻辑
@@ -23,16 +23,12 @@ export default function Dashboard({ initialData }: DashboardProps) {
     let penalty = 0;
     let completedCount = 0;
     let targetCount = 0;
-    const currentMonth = new Date().getMonth() + 1;
 
     Object.entries(data[player].months).forEach(([m, monthData]) => {
       const monthInt = parseInt(m);
       
-      // 只有当我们在目标年份，且月份已经过去（或当前月）才计算罚款
-      // 或者如果现在年份大于目标年份（说明整年都过完了）
-      const shouldCalculatePenalty = 
-        (CURRENT_YEAR === TARGET_YEAR && monthInt <= currentMonth) || 
-        (CURRENT_YEAR > TARGET_YEAR);
+      // 这里的逻辑改为：如果当前模拟月份已经包含或超过了该月，则计算罚款
+      const shouldCalculatePenalty = monthInt <= currentSimulatedMonth;
 
       const target = monthData.books.length;
       const completed = monthData.books.filter(b => b.completed).length;
@@ -59,8 +55,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
     if (!monthData) return null;
 
     // 是否显示本月罚款信息
-    const currentMonth = new Date().getMonth() + 1;
-    const showPenalty = (CURRENT_YEAR === TARGET_YEAR && activeMonth <= currentMonth) || (CURRENT_YEAR > TARGET_YEAR);
+    const showPenalty = activeMonth <= currentSimulatedMonth;
     const missedBooks = monthData.books.length - monthData.books.filter(b => b.completed).length;
 
     return (
@@ -69,12 +64,12 @@ export default function Dashboard({ initialData }: DashboardProps) {
           <div key={book.id || index} className="group flex items-center gap-3 text-sm">
             <button
               onClick={() => toggleBookStatus(player, activeMonth, index)}
-              className={`flex-shrink-0 w-5 h-5 rounded-full border transition-colors flex items-center justify-center
+              className={`flex-shrink-0 w-5 h-5 rounded-full border transition-colors flex items-center justify-center cursor-pointer
                 ${book.completed 
-                  ? 'bg-black border-black text-white' 
+                  ? 'bg-black border-black text-white hover:bg-black/80' 
                   : 'border-gray-300 hover:border-black'
                 }`}
-              disabled={!book.title}
+              disabled={!book.title} // 只有有书名才能点击
             >
               {book.completed && "✓"}
             </button>
@@ -109,9 +104,23 @@ export default function Dashboard({ initialData }: DashboardProps) {
             <h1 className="text-2xl font-semibold tracking-tight mb-1">Read Off</h1>
             <p className="text-sm text-gray-500">{TARGET_YEAR} Reading Challenge</p>
           </div>
-          <div className="text-right text-xs text-gray-400">
-            <div>Penalty Pool</div>
-            <div className="text-lg font-medium text-black">¥{p1Stats.penalty + p2Stats.penalty}</div>
+          <div className="flex flex-col items-end gap-1">
+             <div className="flex items-center gap-2 text-xs text-gray-400">
+                <span>当前模拟时间:</span>
+                <select 
+                  value={currentSimulatedMonth}
+                  onChange={(e) => setCurrentSimulatedMonth(parseInt(e.target.value))}
+                  className="bg-transparent border-b border-gray-200 text-black font-medium focus:outline-none cursor-pointer"
+                >
+                  {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                    <option key={m} value={m}>{m}月</option>
+                  ))}
+                </select>
+             </div>
+            <div className="text-right text-xs text-gray-400 mt-2">
+              <div>Penalty Pool</div>
+              <div className="text-lg font-medium text-black">¥{p1Stats.penalty + p2Stats.penalty}</div>
+            </div>
           </div>
         </header>
 
@@ -173,19 +182,22 @@ export default function Dashboard({ initialData }: DashboardProps) {
               const month = parseInt(m);
               const isActive = activeMonth === month;
               
-              // 在2026计划中，所有月份都是"未来"或"计划中"，所以不置灰
-              // 只有当真正过期且未完成时也许可以用颜色区分，但简约风格不建议太花哨
-              const isPast = CURRENT_YEAR > TARGET_YEAR || (CURRENT_YEAR === TARGET_YEAR && month < new Date().getMonth() + 1);
+              // 模拟时间过去的月份稍微暗一点，表示已经结算
+              const isPast = month < currentSimulatedMonth;
+              const isCurrent = month === currentSimulatedMonth;
               
               return (
                 <button
                   key={m}
                   onClick={() => setActiveMonth(month)}
                   className={`text-sm transition-colors relative py-1
-                    ${isActive ? 'text-black font-medium' : isPast ? 'text-gray-600' : 'text-gray-400 hover:text-gray-600'}
+                    ${isActive ? 'text-black font-medium' : isPast ? 'text-gray-600' : isCurrent ? 'text-black' : 'text-gray-400 hover:text-gray-600'}
                   `}
                 >
                   {month}月
+                  {isCurrent && !isActive && (
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-black" />
+                  )}
                   {isActive && (
                     <div className="absolute bottom-0 left-0 right-0 h-px bg-black" />
                   )}
