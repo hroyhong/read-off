@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useOptimistic, useState } from "react";
+import { startTransition, useEffect, useOptimistic, useState } from "react";
 import { EditableText } from "./EditableText";
 import { updateBookAuthor, updateBookTitle, updateName, toggleBookStatus } from "../actions";
 import type { DB } from "../lib/model";
@@ -13,8 +13,22 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ initialData }: DashboardProps) {
-  const [currentSimulatedMonth, setCurrentSimulatedMonth] = useState(1);
+  const [currentSimulatedMonth, setCurrentSimulatedMonth] = useState<number>(() => {
+    if (typeof window === "undefined") return 1;
+    const raw = window.localStorage.getItem("read-off:current-time-month");
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 && n <= 12 ? n : 1;
+  });
   const [activeMonth, setActiveMonth] = useState(1);
+
+  // 记住“当前时间”选择（仅本地偏好，不进 KV）
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("read-off:current-time-month", String(currentSimulatedMonth));
+    } catch {
+      // ignore
+    }
+  }, [currentSimulatedMonth]);
   
   // 使用 useOptimistic 来处理乐观更新
   const [optimisticData, addOptimisticUpdate] = useOptimistic(
