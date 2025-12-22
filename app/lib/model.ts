@@ -30,29 +30,40 @@ export type MonthData = {
 };
 
 export type PlayerData = {
+  id: string;
   name: string;
   months: Record<string, MonthData>;
 };
 
+// New DB structure: array of players
 export type DB = {
-  player1: PlayerData;
-  player2: PlayerData;
+  players: PlayerData[];
 };
 
 function makeId() {
-  return Math.random().toString(36).substring(7);
+  return Math.random().toString(36).substring(2, 9);
+}
+
+export function createEmptyPlayer(name: string): PlayerData {
+  const player: PlayerData = {
+    id: makeId(),
+    name,
+    months: {},
+  };
+  normalizePlayerMonths(player);
+  return player;
 }
 
 export function createEmptyDB(): DB {
-  const db: DB = {
-    player1: { name: "我", months: {} },
-    player2: { name: "朋友", months: {} },
+  return {
+    players: [
+      createEmptyPlayer("洪浩善"),
+      createEmptyPlayer("王昊天"),
+    ],
   };
-  normalizeDBInPlace(db);
-  return db;
 }
 
-export function normalizeDBInPlace(db: DB) {
+function normalizePlayerMonths(player: PlayerData) {
   const normalizeBook = (raw: unknown): Book => {
     const b = (raw ?? {}) as Record<string, unknown>;
     const id = typeof b.id === "string" && b.id ? b.id : makeId();
@@ -62,51 +73,87 @@ export function normalizeDBInPlace(db: DB) {
     return { id, title, author, completed };
   };
 
-  for (const player of ["player1", "player2"] as const) {
-    if (!db[player]) {
-      db[player] = { name: player === "player1" ? "我" : "朋友", months: {} };
+  if (!player.months) player.months = {};
+
+  for (let m = 0; m <= 12; m++) {
+    const monthKey = String(m);
+    if (!player.months[monthKey]) {
+      player.months[monthKey] = {
+        books: Array.from({ length: MONTHLY_TARGETS[m] }).map(() => ({
+          id: makeId(),
+          title: "",
+          author: "",
+          completed: false,
+        })),
+        switches: 0,
+      };
+      continue;
     }
-    if (!db[player].months) db[player].months = {};
 
-    for (let m = 0; m <= 12; m++) {
-      const monthKey = String(m);
-      if (!db[player].months[monthKey]) {
-        db[player].months[monthKey] = {
-          books: Array.from({ length: MONTHLY_TARGETS[m] }).map(() => ({
-            id: makeId(),
-            title: "",
-            author: "",
-            completed: false,
-          })),
-          switches: 0,
-        };
-        continue;
-      }
+    // 修复旧数据字段缺失/纯空白问题
+    const monthData = player.months[monthKey];
+    if (!Array.isArray(monthData.books)) monthData.books = [];
+    monthData.books = (monthData.books as unknown[]).map(normalizeBook);
 
-      // 修复旧数据字段缺失/纯空白问题
-      const monthData = db[player].months[monthKey];
-      if (!Array.isArray(monthData.books)) monthData.books = [];
-      monthData.books = (monthData.books as unknown[]).map(normalizeBook);
-
-      // 如果 books 数量不够，补齐；如果多了，截断（保持规则一致）
-      const need = MONTHLY_TARGETS[m];
-      if (monthData.books.length < need) {
-        monthData.books.push(
-          ...Array.from({ length: need - monthData.books.length }).map(() => ({
-            id: makeId(),
-            title: "",
-            author: "",
-            completed: false,
-          }))
-        );
-      }
-      if (monthData.books.length > need) {
-        monthData.books = monthData.books.slice(0, need);
-      }
-
-      if (typeof monthData.switches !== "number") monthData.switches = 0;
+    // 如果 books 数量不够，补齐；如果多了，截断（保持规则一致）
+    const need = MONTHLY_TARGETS[m];
+    if (monthData.books.length < need) {
+      monthData.books.push(
+        ...Array.from({ length: need - monthData.books.length }).map(() => ({
+          id: makeId(),
+          title: "",
+          author: "",
+          completed: false,
+        }))
+      );
     }
+    if (monthData.books.length > need) {
+      monthData.books = monthData.books.slice(0, need);
+    }
+
+    if (typeof monthData.switches !== "number") monthData.switches = 0;
   }
 }
 
+export function normalizeDBInPlace(db: DB) {
+  // Handle migration from old format { player1, player2 } to new format { players }
+  const oldDb = db as unknown as Record<string, unknown>;
+  if (!Array.isArray(db.players)) {
+    // Migration: convert old format to new
+    const players: PlayerData[] = [];
+    
+    if (oldDb.player1 && typeof oldDb.player1 === "object") {
+      const p1 = oldDb.player1 as Record<string, unknown>;
+      players.push({
+        id: makeId(),
+        name: typeof p1.name === "string" ? p1.name : "Player 1",
+        months: (p1.months as Record<string, MonthData>) || {},
+      });
+    }
+    
+    if (oldDb.player2 && typeof oldDb.player2 === "object") {
+      const p2 = oldDb.player2 as Record<string, unknown>;
+      players.push({
+        id: makeId(),
+        name: typeof p2.name === "string" ? p2.name : "Player 2",
+        months: (p2.months as Record<string, MonthData>) || {},
+      });
+    }
+    
+    if (players.length === 0) {
+      players.push(createEmptyPlayer("洪浩善"), createEmptyPlayer("王昊天"));
+    }
+    
+    db.players = players;
+    // Clean up old format
+    delete oldDb.player1;
+    delete oldDb.player2;
+  }
 
+  // Normalize each player
+  for (const player of db.players) {
+    if (!player.id) player.id = makeId();
+    if (!player.name) player.name = "Player";
+    normalizePlayerMonths(player);
+  }
+}

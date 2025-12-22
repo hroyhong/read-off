@@ -2,8 +2,8 @@
 
 import { startTransition, useEffect, useOptimistic, useState } from "react";
 import { EditableText } from "./EditableText";
-import { updateBookAuthor, updateBookTitle, updateName, toggleBookStatus } from "../actions";
-import type { DB } from "../lib/model";
+import { updateBookAuthor, updateBookTitle, updateName, toggleBookStatus, addPlayer, removePlayer } from "../actions";
+import type { DB, PlayerData } from "../lib/model";
 
 const PENALTY_PER_BOOK = 500;
 const TARGET_YEAR = 2026;
@@ -23,7 +23,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
   const [currentSimulatedMonth, setCurrentSimulatedMonth] = useState<number>(() => getInitialCurrentTimeMonth());
   const [activeMonth, setActiveMonth] = useState<number>(() => getInitialCurrentTimeMonth());
 
-  // 记住“当前时间”选择（仅本地偏好，不进 KV）
+  // 记住"当前时间"选择（仅本地偏好，不进 KV）
   useEffect(() => {
     try {
       window.localStorage.setItem("read-off:current-time-month", String(currentSimulatedMonth));
@@ -35,39 +35,46 @@ export default function Dashboard({ initialData }: DashboardProps) {
   // 使用 useOptimistic 来处理乐观更新
   const [optimisticData, addOptimisticUpdate] = useOptimistic(
     initialData,
-    (state: DB, update: { type: "TOGGLE_BOOK"; player: "player1" | "player2"; month: number; index: number }) => {
+    (state: DB, update: { type: "TOGGLE_BOOK"; playerId: string; month: number; index: number }) => {
       if (update.type === "TOGGLE_BOOK") {
-        const newState = { ...state };
-        const monthKey = update.month.toString();
-        // 深拷贝一下避免直接修改引用
-        newState[update.player] = { ...state[update.player] };
-        newState[update.player].months = { ...state[update.player].months };
-        newState[update.player].months[monthKey] = { ...state[update.player].months[monthKey] };
-        newState[update.player].months[monthKey].books = newState[update.player].months[monthKey].books.map((b, i) => 
-            i === update.index ? { ...b, completed: !b.completed } : b
-        );
+        const newState = { ...state, players: state.players.map(p => {
+          if (p.id !== update.playerId) return p;
+          const monthKey = update.month.toString();
+          return {
+            ...p,
+            months: {
+              ...p.months,
+              [monthKey]: {
+                ...p.months[monthKey],
+                books: p.months[monthKey].books.map((b, i) => 
+                  i === update.index ? { ...b, completed: !b.completed } : b
+                )
+              }
+            }
+          };
+        })};
         return newState;
       }
       return state;
     }
   );
 
-  const handleToggleBook = async (player: "player1" | "player2", month: number, index: number) => {
+  const handleToggleBook = async (playerId: string, month: number, index: number) => {
     startTransition(() => {
-      addOptimisticUpdate({ type: "TOGGLE_BOOK", player, month, index });
+      addOptimisticUpdate({ type: "TOGGLE_BOOK", playerId, month, index });
     });
-    await toggleBookStatus(player, month, index);
+    await toggleBookStatus(playerId, month, index);
   };
 
   const data = optimisticData;
 
   // 计算逻辑
-  const calculateStats = (player: "player1" | "player2") => {
+  const calculateStats = (player: PlayerData) => {
     let penalty = 0;
     let completedCount = 0;
     let targetCount = 0;
 
-    Object.entries(data[player].months).forEach(([m, monthData]) => {
+    Object.entries(player.months).forEach(([m, monthData]) => {
       const monthInt = parseInt(m);
       if (monthInt === 0) return; 
 
@@ -87,12 +94,12 @@ export default function Dashboard({ initialData }: DashboardProps) {
     return { penalty, completedCount, targetCount };
   };
 
-  const p1Stats = calculateStats("player1");
-  const p2Stats = calculateStats("player2");
+  const allStats = data.players.map(p => ({ player: p, stats: calculateStats(p) }));
+  const totalPenalty = allStats.reduce((sum, { stats }) => sum + stats.penalty, 0);
 
   // 渲染书本列表
-  const renderBookList = (player: "player1" | "player2") => {
-    const monthData = data[player].months[activeMonth.toString()];
+  const renderBookList = (player: PlayerData) => {
+    const monthData = player.months[activeMonth.toString()];
     if (!monthData) return null;
 
     const showPenalty = activeMonth > 0 && currentSimulatedMonth > 0 && activeMonth <= currentSimulatedMonth;
@@ -106,7 +113,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
             <input
               type="checkbox"
               checked={book.completed}
-              onChange={() => handleToggleBook(player, activeMonth, index)}
+              onChange={() => handleToggleBook(player.id, activeMonth, index)}
               className="mt-1 w-5 h-5 rounded border-gray-300 text-black focus:ring-black cursor-pointer flex-shrink-0"
               style={{ accentColor: 'black' }}
             />
@@ -115,7 +122,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
               <div className={`${book.completed ? 'line-through' : ''}`}>
                 <EditableText
                   initialValue={book.title}
-                  onSave={(val) => updateBookTitle(player, activeMonth, index, val)}
+                  onSave={(val) => updateBookTitle(player.id, activeMonth, index, val)}
                   placeholder="添加书名..."
                   className="font-medium"
                 />
@@ -123,7 +130,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
               <div>
                 <EditableText
                   initialValue={book.author || ""}
-                  onSave={(val) => updateBookAuthor(player, activeMonth, index, val)}
+                  onSave={(val) => updateBookAuthor(player.id, activeMonth, index, val)}
                   placeholder="作者"
                   className="text-gray-400 text-xs"
                 />
@@ -147,9 +154,26 @@ export default function Dashboard({ initialData }: DashboardProps) {
 
   const monthList = [0, ...Array.from({length: 12}, (_, i) => i + 1)];
 
+  const handleAddPlayer = async () => {
+    const name = prompt("输入新玩家名字：");
+    if (name && name.trim()) {
+      await addPlayer(name.trim());
+    }
+  };
+
+  const handleRemovePlayer = async (playerId: string, playerName: string) => {
+    if (data.players.length <= 1) {
+      alert("至少需要保留一名玩家");
+      return;
+    }
+    if (confirm(`确定要删除 ${playerName} 吗？`)) {
+      await removePlayer(playerId);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-gray-100">
-      <div className="max-w-3xl mx-auto px-6 py-12">
+      <div className="max-w-5xl mx-auto px-6 py-12">
         
         {/* Header */}
         <header className="mb-16 flex justify-between items-end">
@@ -174,59 +198,44 @@ export default function Dashboard({ initialData }: DashboardProps) {
              </div>
             <div className="text-right text-xs text-gray-400 mt-2">
               <div>Penalty Pool</div>
-              <div className="text-lg font-medium text-black">¥{p1Stats.penalty + p2Stats.penalty}</div>
+              <div className="text-lg font-medium text-black">¥{totalPenalty}</div>
             </div>
           </div>
         </header>
 
-        {/* Overview Cards */}
-        <div className="grid grid-cols-2 gap-8 mb-16">
-          {/* Player 1 */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-baseline">
-              <EditableText 
-                className="text-lg font-medium" 
-                initialValue={data.player1.name} 
-                onSave={(val) => updateName("player1", val)}
-              />
-              <span className="text-xs font-mono text-gray-400">{p1Stats.completedCount}/{p1Stats.targetCount}</span>
+        {/* Overview Cards - Dynamic grid based on player count */}
+        <div className={`grid gap-8 mb-16 ${data.players.length <= 2 ? 'grid-cols-2' : data.players.length <= 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
+          {allStats.map(({ player, stats }) => (
+            <div key={player.id} className="space-y-4">
+              <div className="flex justify-between items-baseline">
+                <EditableText 
+                  className="text-lg font-medium" 
+                  initialValue={player.name} 
+                  onSave={(val) => updateName(player.id, val)}
+                />
+                <span className="text-xs font-mono text-gray-400">{stats.completedCount}/{stats.targetCount}</span>
+              </div>
+              <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-black rounded-full transition-all duration-500"
+                  style={{ width: `${(stats.completedCount / Math.max(1, stats.targetCount)) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs">
+                  <span className="text-gray-400">待缴罚款</span>
+                  <span className={stats.penalty > 0 ? "text-red-500 font-medium" : "text-gray-300"}>
+                      ¥{stats.penalty}
+                  </span>
+              </div>
             </div>
-            <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-black rounded-full transition-all duration-500"
-                style={{ width: `${(p1Stats.completedCount / Math.max(1, p1Stats.targetCount)) * 100}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs">
-                <span className="text-gray-400">待缴罚款</span>
-                <span className={p1Stats.penalty > 0 ? "text-red-500 font-medium" : "text-gray-300"}>
-                    ¥{p1Stats.penalty}
-                </span>
-            </div>
-          </div>
-
-          {/* Player 2 */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-baseline">
-              <EditableText 
-                className="text-lg font-medium" 
-                initialValue={data.player2.name} 
-                onSave={(val) => updateName("player2", val)}
-              />
-              <span className="text-xs font-mono text-gray-400">{p2Stats.completedCount}/{p2Stats.targetCount}</span>
-            </div>
-            <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-black rounded-full transition-all duration-500"
-                style={{ width: `${(p2Stats.completedCount / Math.max(1, p2Stats.targetCount)) * 100}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs">
-                <span className="text-gray-400">待缴罚款</span>
-                <span className={p2Stats.penalty > 0 ? "text-red-500 font-medium" : "text-gray-300"}>
-                    ¥{p2Stats.penalty}
-                </span>
-            </div>
+          ))}
+          
+          {/* Add Player Button */}
+          <div 
+            onClick={handleAddPlayer}
+            className="flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors min-h-[100px]"
+          >
+            <span className="text-gray-400 text-sm">+ 添加玩家</span>
           </div>
         </div>
 
@@ -263,19 +272,24 @@ export default function Dashboard({ initialData }: DashboardProps) {
           </div>
         </div>
 
-        {/* Books Grid */}
-        <div className="grid md:grid-cols-2 gap-12">
-          {/* Player 1 List */}
-          <div>
-             <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-6">{data.player1.name}</h3>
-             {renderBookList("player1")}
-          </div>
-
-          {/* Player 2 List */}
-          <div>
-            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-6">{data.player2.name}</h3>
-            {renderBookList("player2")}
-          </div>
+        {/* Books Grid - Dynamic based on player count */}
+        <div className={`grid gap-12 ${data.players.length <= 2 ? 'md:grid-cols-2' : data.players.length <= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
+          {data.players.map((player) => (
+            <div key={player.id}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wider">{player.name}</h3>
+                {data.players.length > 1 && (
+                  <button 
+                    onClick={() => handleRemovePlayer(player.id, player.name)}
+                    className="text-xs text-gray-300 hover:text-red-500 transition-colors"
+                  >
+                    删除
+                  </button>
+                )}
+              </div>
+              {renderBookList(player)}
+            </div>
+          ))}
         </div>
 
         {/* Rules Footer */}
