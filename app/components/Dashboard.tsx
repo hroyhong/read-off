@@ -230,13 +230,13 @@ export default function Dashboard({ initialData }: DashboardProps) {
             </div>
           ))}
           
-          {/* Add Player Button */}
-          <div 
+          {/* Add Player Button - smaller */}
+          <button 
             onClick={handleAddPlayer}
-            className="flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors min-h-[100px]"
+            className="text-xs text-gray-400 hover:text-black transition-colors self-start"
           >
-            <span className="text-gray-400 text-sm">+ 添加玩家</span>
-          </div>
+            + 添加玩家
+          </button>
         </div>
 
         {/* Month Navigation */}
@@ -296,7 +296,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
         <footer className="mt-32 pt-12 border-t border-gray-100 text-xs text-gray-400 leading-relaxed">
           <p>规则：1月1本，2月2本，3月3本，4-12月每月4本。</p>
           <p>少读一本罚款 ¥500。</p>
-          <p>对方完成任务才能获得罚款，否则累计至年底。</p>
+          <p>完成任务的赢家平分罚款池，都没完成则累计至年底。</p>
         </footer>
 
       </div>
