@@ -11,8 +11,8 @@
               "title": "11",
               "author": "",
               "completed": false,
-              "totalPages": 1000,
-              "currentPage": 1000,
+              "totalPages": 0,
+              "currentPage": 874,
               "notes": ""
             }
           ],
@@ -469,7 +469,7 @@
               "title": "",
               "author": "",
               "completed": false,
-              "totalPages": 100,
+              "totalPages": 0,
               "currentPage": 0,
               "notes": ""
             }

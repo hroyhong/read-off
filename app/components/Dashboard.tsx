@@ -3,6 +3,7 @@
 import { startTransition, useEffect, useOptimistic, useState } from "react";
 import Link from "next/link";
 import { EditableText } from "./EditableText";
+import { DebouncedNumberInput } from "./DebouncedNumberInput";
 import { updateBookAuthor, updateBookTitle, updateName, toggleBookStatus, addPlayer, removePlayer, updateBookTotalPages, updateBookCurrentPage } from "../actions";
 import type { DB, PlayerData } from "../lib/model";
 
@@ -207,18 +208,16 @@ export default function Dashboard({ initialData }: DashboardProps) {
                                 
                                 {/* Compact Inputs: [Curr] / [Total] */}
                                 <div className="flex items-center gap-1 text-xs text-gray-400 font-mono">
-                                    <input 
-                                        type="number"
-                                        value={book.currentPage || ""}
-                                        onChange={(e) => updateBookCurrentPage(player.id, activeMonth, index, parseFloat(e.target.value))}
+                                    <DebouncedNumberInput 
+                                        value={book.currentPage || 0}
+                                        onSave={(val) => updateBookCurrentPage(player.id, activeMonth, index, val)}
                                         placeholder="0"
                                         className="w-10 text-center bg-gray-50 rounded px-1 py-0.5 border-none focus:ring-1 focus:ring-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-black"
                                     />
                                     <span>/</span>
-                                    <input 
-                                        type="number"
-                                        value={book.totalPages || ""}
-                                        onChange={(e) => updateBookTotalPages(player.id, activeMonth, index, parseFloat(e.target.value))}
+                                    <DebouncedNumberInput 
+                                        value={book.totalPages || 0}
+                                        onSave={(val) => updateBookTotalPages(player.id, activeMonth, index, val)}
                                         placeholder="0"
                                         className="w-10 text-center bg-gray-50 rounded px-1 py-0.5 border-none focus:ring-1 focus:ring-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-black"
                                     />
@@ -374,7 +373,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
                   const isAhead = diff >= 0;
 
                   return (
-                    <div className="flex items-center justify-between w-full text-xs font-medium text-gray-400 uppercase tracking-wider mb-6">
+                    <div className="flex items-center justify-between w-full text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
                       <div className="flex items-center gap-1">
                         <span className="text-black">{totalPages}</span>
                         <span>/</span>
