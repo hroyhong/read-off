@@ -22,6 +22,10 @@ export type Book = {
   title: string;
   author: string;
   completed: boolean;
+  totalPages: number;
+
+  currentPage: number;
+  notes: string;
 };
 
 export type MonthData = {
@@ -70,7 +74,10 @@ function normalizePlayerMonths(player: PlayerData) {
     const title = typeof b.title === "string" && b.title.trim() ? b.title.trim() : "";
     const author = typeof b.author === "string" && b.author.trim() ? b.author.trim() : "";
     const completed = !!b.completed;
-    return { id, title, author, completed };
+    const totalPages = typeof b.totalPages === "number" ? b.totalPages : 0;
+    const currentPage = typeof b.currentPage === "number" ? b.currentPage : 0;
+    const notes = typeof b.notes === "string" ? b.notes : "";
+    return { id, title, author, completed, totalPages, currentPage, notes };
   };
 
   if (!player.months) player.months = {};
@@ -84,6 +91,9 @@ function normalizePlayerMonths(player: PlayerData) {
           title: "",
           author: "",
           completed: false,
+          totalPages: 0,
+          currentPage: 0,
+          notes: "",
         })),
         switches: 0,
       };
@@ -104,6 +114,9 @@ function normalizePlayerMonths(player: PlayerData) {
           title: "",
           author: "",
           completed: false,
+          totalPages: 0,
+          currentPage: 0,
+          notes: "",
         }))
       );
     }

@@ -70,6 +70,9 @@ export async function toggleBookStatus(playerId: string, month: number, bookInde
   if (player?.months[monthKey]?.books[bookIndex]) {
     const book = player.months[monthKey].books[bookIndex];
     book.completed = !book.completed;
+    if (book.completed) {
+      book.currentPage = book.totalPages;
+    }
     await saveDB(db);
     revalidatePath("/");
   }
@@ -83,5 +86,47 @@ export async function updateName(playerId: string, name: string) {
     player.name = name;
     await saveDB(db);
     revalidatePath("/");
+  }
+}
+
+
+// Action: 更新总页数
+export async function updateBookTotalPages(playerId: string, month: number, bookIndex: number, totalPages: number) {
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  const monthKey = month.toString();
+  
+  if (player?.months[monthKey]?.books[bookIndex]) {
+    player.months[monthKey].books[bookIndex].totalPages = Math.max(0, Math.floor(totalPages));
+    await saveDB(db);
+    revalidatePath("/");
+  }
+}
+
+// Action: 更新当前页数
+export async function updateBookCurrentPage(playerId: string, month: number, bookIndex: number, currentPage: number) {
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  const monthKey = month.toString();
+  
+  if (player?.months[monthKey]?.books[bookIndex]) {
+    player.months[monthKey].books[bookIndex].currentPage = Math.max(0, Math.floor(currentPage));
+    await saveDB(db);
+    revalidatePath("/");
+  }
+}
+
+
+// Action: 更新笔记
+export async function updateBookNotes(playerId: string, month: number, bookIndex: number, notes: string) {
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  const monthKey = month.toString();
+  
+  if (player?.months[monthKey]?.books[bookIndex]) {
+    player.months[monthKey].books[bookIndex].notes = notes;
+    await saveDB(db);
+    revalidatePath("/");
+    revalidatePath(`/book/${playerId}/${month}/${bookIndex}`);
   }
 }
