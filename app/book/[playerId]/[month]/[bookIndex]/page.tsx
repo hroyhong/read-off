@@ -1,10 +1,10 @@
 "use client";
 
-import { useOptimistic, startTransition, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { updateBookTitle, updateBookAuthor, updateBookTotalPages, updateBookCurrentPage, updateBookNotes } from "../../../../actions";
+import { updateBookTitle, updateBookAuthor, updateBookTotalPages, updateBookCurrentPage, updateBookNotes, rateBook, getData } from "../../../../actions";
 import { EditableText } from "../../../../components/EditableText";
+import type { Book, PlayerData } from "../../../../lib/model";
 
 interface PageProps {
   params: Promise<{
@@ -14,20 +14,13 @@ interface PageProps {
   }>;
 }
 
-// We need to fetch data on the client or pass it down. 
-// Since this is a simple app, we can fetch the specific book data or just use the actions.
-// However, to show initial data, we need to fetch it.
-// Let's use a client component that fetches data via a server action or just passed in props if it was a server component.
-// But `getData` is a server action. We can call it here.
-
-import { getData } from "../../../../actions";
-import type { Book } from "../../../../lib/model";
-
 export default function BookPage({ params }: PageProps) {
   const [book, setBook] = useState<Book | null>(null);
+  const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
   const [ids, setIds] = useState<{playerId: string, month: number, bookIndex: number} | null>(null);
-  const router = useRouter();
+  const [readerScore, setReaderScore] = useState(0);
 
   useEffect(() => {
     params.then(async (resolvedParams) => {
@@ -37,11 +30,35 @@ export default function BookPage({ params }: PageProps) {
       setIds({ playerId, month, bookIndex });
 
       const db = await getData();
-      const player = db.players.find(p => p.id === playerId);
-      const b = player?.months[month.toString()]?.books[bookIndex];
+      const p = db.players.find(p => p.id === playerId);
+      const b = p?.months[month.toString()]?.books[bookIndex];
       
-      if (b) {
+      if (b && p) {
         setBook(b);
+        setPlayer(p);
+        
+        // Calculate reader score for this player
+        let score = 0;
+        let unfinishedCount = 0;
+        Object.values(p.months).forEach(monthData => {
+          monthData.books.forEach(bk => {
+            if (bk.aiScore && !bk.completed) unfinishedCount++;
+          });
+        });
+        Object.values(p.months).forEach(monthData => {
+          monthData.books.forEach(bk => {
+            if (bk.aiScore) {
+              if (bk.completed) {
+                score += bk.aiScore;
+              } else {
+                const progress = bk.totalPages > 0 ? bk.currentPage / bk.totalPages : 0;
+                const dilution = 1 / (1 + Math.log(unfinishedCount + 1));
+                score += bk.aiScore * progress * dilution;
+              }
+            }
+          });
+        });
+        setReaderScore(Math.round(score));
       }
       setLoading(false);
     });
@@ -57,13 +74,58 @@ export default function BookPage({ params }: PageProps) {
     await updateBookNotes(playerId, month, bookIndex, val);
   };
 
+  const handleRead = async () => {
+    if (!book.title) {
+      alert("Please enter a book title first.");
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      const rating = await rateBook(playerId, month, bookIndex);
+      if (rating) {
+        setBook(prev => prev ? { 
+          ...prev, 
+          aiScore: rating.score,
+          intro: rating.intro,
+          readingAdvice: rating.readingAdvice,
+          scoreExplanation: rating.scoreExplanation
+        } : null);
+      }
+    } catch (e) {
+      alert("Failed to analyze book. Please check API key.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const progress = book.totalPages > 0 ? Math.round((book.currentPage / book.totalPages) * 100) : 0;
+
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans p-6 max-w-2xl mx-auto">
-      <Link href="/" className="text-sm text-gray-400 hover:text-black mb-8 block">
-        ← Back to Dashboard
-      </Link>
+      <div className="flex justify-between items-center mb-8">
+        <Link href="/" className="text-sm text-gray-400 hover:text-black">
+          ← Back to Dashboard
+        </Link>
+        <div className="text-right">
+          <div className="text-xs text-gray-400 uppercase tracking-wider">Reader Score</div>
+          <div className="text-xl font-bold font-mono">{readerScore} pts</div>
+        </div>
+      </div>
 
       <div className="space-y-8">
+        {/* Month Badge */}
+        <div className="flex items-center gap-4">
+          <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
+            {month === 0 ? 'Dec 2025' : `Month ${month}`}
+          </span>
+          {book.completed && (
+            <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
+              ✓ Completed
+            </span>
+          )}
+        </div>
+
+        {/* Title & Author */}
         <div>
           <h1 className="text-3xl font-bold mb-2">
             <EditableText
@@ -88,7 +150,8 @@ export default function BookPage({ params }: PageProps) {
           </div>
         </div>
 
-        <div className="flex gap-8 p-6 bg-gray-50 rounded-xl">
+        {/* Progress Section with Read Button */}
+        <div className="flex items-center gap-6 p-6 bg-gray-50 rounded-xl">
           <div>
             <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Current Page</label>
             <input
@@ -118,13 +181,58 @@ export default function BookPage({ params }: PageProps) {
             />
           </div>
           <div>
-             <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Progress</label>
-             <div className="text-2xl font-mono font-medium text-gray-400">
-                {book.totalPages > 0 ? Math.round((book.currentPage / book.totalPages) * 100) : 0}%
-             </div>
+            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Progress</label>
+            <div className="text-2xl font-mono font-medium text-gray-400">{progress}%</div>
+          </div>
+          
+          {/* Read Button */}
+          <div className="ml-auto">
+            <button
+              onClick={handleRead}
+              disabled={analyzing || !book.title}
+              className="px-6 py-3 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            >
+              {analyzing ? "Reading..." : "Read"}
+            </button>
           </div>
         </div>
 
+        {/* AI Analysis Results - Only show after Read */}
+        {book.aiScore && (
+          <div className="space-y-6">
+            {/* Book Score + Intro */}
+            <div className="p-6 bg-gray-50 rounded-xl">
+              <div className="flex items-start gap-6">
+                <div className="text-center flex-shrink-0">
+                  <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Book Score</div>
+                  <div className="text-4xl font-bold text-black">{book.aiScore}</div>
+                </div>
+                <div className="flex-grow">
+                  <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Introduction</div>
+                  <p className="text-gray-700 leading-relaxed">{book.intro}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Reading Advice */}
+            {book.readingAdvice && (
+              <div className="p-6 bg-green-50 rounded-xl border border-green-100">
+                <div className="text-xs text-green-600 uppercase tracking-wider mb-2">Reading Advice</div>
+                <p className="text-gray-700 leading-relaxed">{book.readingAdvice}</p>
+              </div>
+            )}
+
+            {/* Score Explanation */}
+            {book.scoreExplanation && (
+              <div className="p-6 bg-yellow-50 rounded-xl border border-yellow-100">
+                <div className="text-xs text-yellow-700 uppercase tracking-wider mb-2">Why This Score?</div>
+                <p className="text-gray-700 leading-relaxed">{book.scoreExplanation}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Notes */}
         <div>
           <label className="block text-sm font-medium text-gray-900 mb-2">Notes & Reviews</label>
           <textarea
@@ -138,3 +246,4 @@ export default function BookPage({ params }: PageProps) {
     </div>
   );
 }
+

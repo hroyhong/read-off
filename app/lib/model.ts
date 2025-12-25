@@ -25,7 +25,13 @@ export type Book = {
   totalPages: number;
 
   currentPage: number;
+
   notes: string;
+  aiScore?: number;
+  reasoning?: string;
+  intro?: string;
+  readingAdvice?: string;
+  scoreExplanation?: string;
 };
 
 export type MonthData = {
@@ -77,7 +83,12 @@ function normalizePlayerMonths(player: PlayerData) {
     const totalPages = typeof b.totalPages === "number" ? b.totalPages : 0;
     const currentPage = typeof b.currentPage === "number" ? b.currentPage : 0;
     const notes = typeof b.notes === "string" ? b.notes : "";
-    return { id, title, author, completed, totalPages, currentPage, notes };
+    const aiScore = typeof b.aiScore === "number" ? b.aiScore : undefined;
+    const reasoning = typeof b.reasoning === "string" ? b.reasoning : undefined;
+    const intro = typeof b.intro === "string" ? b.intro : undefined;
+    const readingAdvice = typeof b.readingAdvice === "string" ? b.readingAdvice : undefined;
+    const scoreExplanation = typeof b.scoreExplanation === "string" ? b.scoreExplanation : undefined;
+    return { id, title, author, completed, totalPages, currentPage, notes, aiScore, reasoning, intro, readingAdvice, scoreExplanation };
   };
 
   if (!player.months) player.months = {};

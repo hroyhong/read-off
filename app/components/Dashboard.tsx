@@ -4,8 +4,9 @@ import { startTransition, useEffect, useOptimistic, useState } from "react";
 import Link from "next/link";
 import { EditableText } from "./EditableText";
 import { DebouncedNumberInput } from "./DebouncedNumberInput";
-import { updateBookAuthor, updateBookTitle, updateName, toggleBookStatus, addPlayer, removePlayer, updateBookTotalPages, updateBookCurrentPage } from "../actions";
+import { updateBookTitle, updateName, toggleBookStatus, addPlayer, removePlayer, updateBookTotalPages, updateBookCurrentPage } from "../actions";
 import type { DB, PlayerData } from "../lib/model";
+import katex from "katex";
 
 const PENALTY_PER_BOOK = 50;
 const TARGET_YEAR = 2026;
@@ -115,6 +116,36 @@ export default function Dashboard({ initialData }: DashboardProps) {
       completedCount += completed;
     });
 
+    // Score Calculation
+    let totalScore = 0;
+    
+    // Calculate unfinished books count (x)
+    let unfinishedWithScoreCount = 0;
+    Object.values(player.months).forEach(monthData => {
+      monthData.books.forEach(book => {
+        if (book.aiScore && !book.completed) {
+          unfinishedWithScoreCount++;
+        }
+      });
+    });
+
+    Object.values(player.months).forEach(monthData => {
+      monthData.books.forEach(book => {
+        if (book.aiScore) {
+          if (book.completed) {
+            // Completed books get FULL score (no dilution)
+            totalScore += book.aiScore;
+          } else {
+            // Diluted score for unfinished books: Score * Progress * (1 / (1 + ln(n+1)))
+            // n = number of unfinished books with scores
+            const progress = book.totalPages > 0 ? book.currentPage / book.totalPages : 0;
+            const dilutionFactor = 1 / (1 + Math.log(unfinishedWithScoreCount + 1));
+            totalScore += book.aiScore * progress * dilutionFactor;
+          }
+        }
+      });
+    });
+
     // Daily Progress Calculation
     let totalDailyTarget = 0;
     let expectedProgress = 0;
@@ -144,11 +175,12 @@ export default function Dashboard({ initialData }: DashboardProps) {
         actualProgress = actual;
     }
 
-    return { penalty, completedCount, targetCount, totalDailyTarget, expectedProgress, actualProgress };
+    return { penalty, completedCount, targetCount, totalDailyTarget, expectedProgress, actualProgress, totalScore };
   };
 
   const allStats = data.players.map(p => ({ player: p, stats: calculateStats(p) }));
   const totalPenalty = allStats.reduce((sum, { stats }) => sum + stats.penalty, 0);
+  const totalSystemScore = allStats.reduce((sum, { stats }) => sum + stats.totalScore, 0);
 
   // 渲染书本列表
   const renderBookList = (player: PlayerData) => {
@@ -163,21 +195,30 @@ export default function Dashboard({ initialData }: DashboardProps) {
         {monthData.books.map((book, index) => {
            const progress = book.totalPages > 0 ? (book.currentPage / book.totalPages) * 100 : 0;
            
+           // Calculate Expected Progress for this specific book? 
+           // Or just use the general daily target? 
+           // User said: "gray right is green, gray left is red" relative to "expected".
+           // Let's assume expected progress % is (currentDay / daysInMonth) * 100
+           const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+           const expectedProgressPercent = (currentDay / daysInMonth) * 100;
            return (
           <div key={book.id || index} className="group relative">
-            {/* Background Progress Bar */}
-            <div 
-                className="absolute inset-0 bg-gray-50 rounded-lg transition-all duration-500 pointer-events-none"
+            {/* Simple Gray Progress Bar */}
+            <div className="absolute inset-0 bg-white rounded-lg pointer-events-none" />
+            {progress > 0 && (
+              <div 
+                className="absolute inset-y-0 left-0 bg-gray-100 rounded-lg pointer-events-none"
                 style={{ width: `${Math.min(100, progress)}%` }}
-            />
+              />
+            )}
             
-            <div className="relative p-3 flex items-start gap-4">
-                {/* Checkbox */}
+            <div className="relative p-3 flex items-center gap-4">
+                {/* Checkbox - Centered */}
                 <input
                 type="checkbox"
                 checked={book.completed}
                 onChange={() => handleToggleBook(player.id, activeMonth, index)}
-                className="mt-1.5 w-5 h-5 rounded border-gray-300 text-black focus:ring-black cursor-pointer flex-shrink-0 bg-transparent z-10"
+                className="w-5 h-5 rounded border-gray-300 text-black focus:ring-black cursor-pointer flex-shrink-0 bg-transparent z-10"
                 style={{ accentColor: 'black' }}
                 />
                 
@@ -193,19 +234,12 @@ export default function Dashboard({ initialData }: DashboardProps) {
                                     <EditableText
                                         initialValue=""
                                         onSave={(val) => updateBookTitle(player.id, activeMonth, index, val)}
-                                        placeholder="添加书名..."
+                                        placeholder="Add book title..."
                                         className="font-medium text-base bg-transparent"
                                     />
                                 )}
                             </div>
                             <div className="mt-1 flex items-center justify-between">
-                                <EditableText
-                                initialValue={book.author || ""}
-                                onSave={(val) => updateBookAuthor(player.id, activeMonth, index, val)}
-                                placeholder="作者"
-                                className="text-gray-400 text-xs bg-transparent"
-                                />
-                                
                                 {/* Compact Inputs: [Curr] / [Total] */}
                                 <div className="flex items-center gap-1 text-xs text-gray-400 font-mono">
                                     <DebouncedNumberInput 
@@ -223,19 +257,31 @@ export default function Dashboard({ initialData }: DashboardProps) {
                                     />
                                 </div>
                             </div>
+                            
                         </div>
+                        
+                        {/* Book Score Display - Dark font, outside background */}
+                        {book.aiScore && (
+                            <Link href={`/book/${player.id}/${activeMonth}/${index}`} className="flex-shrink-0">
+                                <div className="text-2xl font-bold text-black hover:text-gray-500 transition-colors">
+                                    {book.aiScore}
+                                </div>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>
           </div>
-        )})}
+        );
+        })}
+        
         
         <div className="pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
             <span>
-              {activeMonth === 0 ? "本月为测试月，无罚款" : 
+              {activeMonth === 0 ? "Test month, no penalty" : 
                 showPenalty && missedBooks > 0 
-                  ? `本月罚款: ¥${missedBooks * PENALTY_PER_BOOK}`
-                  : "尚未结算"
+                  ? `Penalty this month: ¥${missedBooks * PENALTY_PER_BOOK}`
+                  : "Not settled yet"
               }
             </span>
         </div>
@@ -274,7 +320,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
           </div>
           <div className="flex flex-col items-end gap-1">
              <div className="text-xs font-medium text-gray-900">
-                {now.getFullYear()}年 {now.getMonth() + 1}月 {now.getDate()}日
+                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][now.getMonth()]} {now.getDate()}, {now.getFullYear()}
              </div>
             <div className="text-right text-xs text-gray-400 mt-2">
               <div>Penalty Pool</div>
@@ -301,7 +347,25 @@ export default function Dashboard({ initialData }: DashboardProps) {
                 />
               </div>
               <div className="flex justify-between text-xs">
-                  <span className="text-gray-400">待缴罚款</span>
+                  <span className="text-gray-400">Score Share</span>
+                  <span className="font-medium">
+                      {Math.round(stats.totalScore)} <span className="text-gray-300">({totalSystemScore > 0 ? Math.round((stats.totalScore / totalSystemScore) * 100) : 0}%)</span>
+                  </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                  <span className="text-gray-400">Potential Payout</span>
+                  <span className="text-green-600 font-medium">
+                      ¥{stats.completedCount >= stats.targetCount && totalSystemScore > 0 ? Math.round(totalPenalty * (stats.totalScore / totalSystemScore)) : 0}
+                  </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                  <span className="text-gray-400">Status</span>
+                  <span className={stats.completedCount >= stats.targetCount ? "text-green-600 font-medium" : "text-gray-300"}>
+                      {stats.completedCount >= stats.targetCount ? '✓ Eligible for payout' : 'Not eligible'}
+                  </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                  <span className="text-gray-400">Pending Penalty</span>
                   <span className={stats.penalty > 0 ? "text-red-500 font-medium" : "text-gray-300"}>
                       ¥{stats.penalty}
                   </span>
@@ -373,21 +437,18 @@ export default function Dashboard({ initialData }: DashboardProps) {
                   const isAhead = diff >= 0;
 
                   return (
-                    <div className="flex items-center justify-between w-full text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-                      <div className="flex items-center gap-1">
-                        <span className="text-black">{totalPages}</span>
-                        <span>/</span>
-                        <span className="text-black">{daysInMonth}</span>
-                        <span>=</span>
-                        <span className="text-black">{Math.ceil(daily)}</span>
-                      </div>
-                      
-                      {/* Ahead/Behind - Only show for current month */}
-                      {activeMonth === currentSimulatedMonth && (
-                        <div className={`font-mono font-medium ${isAhead ? 'text-green-600' : 'text-red-500'}`}>
-                            {isAhead ? '+' : ''}{diff.toFixed(0)}
+                    <div className="w-full mb-6 space-y-3">
+                        {/* Reader Score - Simple display */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl font-bold font-mono">{Math.round(playerStats?.totalScore || 0)}</span>
+                            <span className="text-xs text-gray-400">pts</span>
                         </div>
-                      )}
+
+                        {/* Recommended Dose Row */}
+                        <div className="flex items-center justify-between text-xs font-medium text-gray-400 uppercase tracking-wider">
+                            <span>Recommended Dose</span>
+                            <span className="text-black">{Math.ceil(daily)} / day</span>
+                        </div>
                     </div>
                   );
                 })()}
@@ -397,11 +458,21 @@ export default function Dashboard({ initialData }: DashboardProps) {
           ))}
         </div>
 
-        {/* Rules Footer */}
-        <footer className="mt-32 pt-12 border-t border-gray-100 text-xs text-gray-400 leading-relaxed">
-          <p>规则：1月1本，2月2本，3月3本，4-12月每月4本。</p>
-          <p>少读一本罚款 ¥50。</p>
-          <p>完成任务的赢家平分罚款池，都没完成则累计至年底。</p>
+        {/* Rules Footer with Formula */}
+        <footer className="mt-32 pt-12 border-t border-gray-100 text-xs text-gray-400 leading-relaxed space-y-4">
+          <div>
+            <p>Rules: Jan 1 book, Feb 2 books, Mar 3 books, Apr-Dec 4 books/month.</p>
+            <p>Penalty: ¥50 per missed book.</p>
+            <p>Winners split the penalty pool at year end.</p>
+          </div>
+          <div className="pt-4 border-t border-gray-50">
+            <p className="text-gray-300 mb-2">Reader Score Formula:</p>
+            <div 
+              className="text-gray-300"
+              dangerouslySetInnerHTML={{ __html: katex.renderToString(`\\text{Reader Score} = \\sum_{i} B_i \\times P_i \\times \\frac{1}{1+\\ln(n+1)}`, { throwOnError: false }) }} 
+            />
+            <p className="text-gray-300 mt-2">B = Book Score, P = Progress %, n = unfinished books</p>
+          </div>
         </footer>
 
       </div>

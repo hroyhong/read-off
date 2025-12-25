@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { DB } from "./lib/model";
 import { createEmptyPlayer } from "./lib/model";
 import { loadDB, saveDB } from "./lib/storage";
+import { getAiRating } from "./lib/llm";
 
 export async function getData(): Promise<DB> {
   return await loadDB();
@@ -128,5 +129,42 @@ export async function updateBookNotes(playerId: string, month: number, bookIndex
     await saveDB(db);
     revalidatePath("/");
     revalidatePath(`/book/${playerId}/${month}/${bookIndex}`);
+  }
+}
+
+// Action: AI 评分
+export async function rateBook(playerId: string, month: number, bookIndex: number) {
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  const monthKey = month.toString();
+  
+  if (player?.months[monthKey]?.books[bookIndex]) {
+    const book = player.months[monthKey].books[bookIndex];
+    
+    // Collect context: titles of other rated books
+    const contextBooks: string[] = [];
+    db.players.forEach(p => {
+      Object.values(p.months).forEach(m => {
+        m.books.forEach(b => {
+          if (b.aiScore && b.title) {
+            contextBooks.push(`${b.title} (${b.aiScore})`);
+          }
+        });
+      });
+    });
+
+    const rating = await getAiRating(book.title, book.author, contextBooks);
+    
+
+
+    book.aiScore = rating.score;
+    book.intro = rating.intro;
+    book.readingAdvice = rating.readingAdvice;
+    book.scoreExplanation = rating.scoreExplanation;
+    
+    await saveDB(db);
+    revalidatePath("/");
+    revalidatePath(`/book/${playerId}/${month}/${bookIndex}`);
+    return rating;
   }
 }

@@ -8,12 +8,17 @@
           "books": [
             {
               "id": "x9byri",
-              "title": "11",
-              "author": "",
+              "title": "罪与罚",
+              "author": "陀思妥耶夫斯基",
               "completed": false,
-              "totalPages": 0,
-              "currentPage": 874,
-              "notes": ""
+              "totalPages": 1040,
+              "currentPage": 880,
+              "notes": "",
+              "aiScore": 88,
+              "reasoning": "The novel presents significant psychological complexity, dense philosophical monologues, and a convoluted multi-layered plot. Readers must navigate intense existential themes and 19th-century Russian social contexts, making it a demanding yet rewarding intellectual challenge.",
+              "intro": "Written by Fyodor Dostoevsky, this masterpiece follows Rodion Raskolnikov, a destitute former law student in St. Petersburg who formulates a plan to kill an unscrupulous pawnbroker. The novel delves into the subsequent psychological torment, moral dilemmas, and the pursuit of redemption that follow his harrowing act.",
+              "readingAdvice": "Pay close attention to the characters' inner monologues and the recurring feverish hallucinations, as they reveal more than the outward plot. It is helpful to keep a character list due to the use of Russian patronymics and nicknames, and consider reading a version with comprehensive footnotes regarding 19th-century social conditions.",
+              "scoreExplanation": "The difficulty is high due to its dense philosophical dialogues, complex psychological profiles, and polyphonic narrative structure. While the prose itself is relatively accessible compared to Joyce or Proust, the length of the book and the heavy existentialist and theological themes require significant cognitive effort and stamina from the reader."
             }
           ],
           "switches": 0
@@ -480,12 +485,16 @@
           "books": [
             {
               "id": "530fh",
-              "title": "",
+              "title": "Wuthering Heights",
               "author": "",
               "completed": false,
               "totalPages": 0,
               "currentPage": 0,
-              "notes": ""
+              "notes": "",
+              "aiScore": 76,
+              "intro": "Emily Brontë's only novel is a seminal work of Gothic fiction that explores the destructive intensity of the relationship between Catherine Earnshaw and the foundling Heathcliff. Set against the desolate Yorkshire moors, it is a multi-generational tale of obsession, revenge, and the blurred lines between love and hate.",
+              "readingAdvice": "Pay close attention to the frame narrative; the story is told by an outsider (Lockwood) recording the account of a housekeeper (Nelly Dean), which adds layers of bias. It is also helpful to keep a family tree diagram nearby, as the repetition of names across two generations can be confusing for a first-time reader.",
+              "scoreExplanation": "The score reflects the challenging Victorian prose and the complex, nested narrative structure that requires constant focus to track temporal shifts. While it is more linguistically demanding than modern non-fiction like 'The Obstacle is the Way', it is less abstract than 'Faust' and lacks the extreme syntactical density and length of 'In Search of Lost Time'. The use of Joseph’s heavy Yorkshire dialect also adds a specific layer of phonetic difficulty for readers."
             }
           ],
           "switches": 0
@@ -924,12 +933,16 @@
           "books": [
             {
               "id": "x27qvis",
-              "title": "",
+              "title": "The Obstacle is the Way",
               "author": "",
               "completed": false,
-              "totalPages": 0,
-              "currentPage": 0,
-              "notes": ""
+              "totalPages": 190,
+              "currentPage": 20,
+              "notes": "",
+              "aiScore": 32,
+              "intro": "Drawing on the ancient Greek philosophy of Stoicism, this book provides a modern framework for converting life's challenges into opportunities for growth. It focuses on the three disciplines of perception, action, and will to help readers navigate adversity with resilience.",
+              "readingAdvice": "Treat this as a practical manual rather than a dense academic text; it is best consumed in small sections to allow time for active reflection and real-world application of the principles.",
+              "scoreExplanation": "This score reflects its status as an accessible, contemporary work written in straightforward prose. Compared to the high-complexity philosophical and experimental literary giants on the list, this book requires significantly less mental effort and time, serving as a light, actionable entry point into Stoic thought."
             }
           ],
           "switches": 0
@@ -938,12 +951,16 @@
           "books": [
             {
               "id": "2f6huie",
-              "title": "",
+              "title": "Meditations",
               "author": "",
               "completed": false,
               "totalPages": 0,
               "currentPage": 0,
-              "notes": ""
+              "notes": "",
+              "aiScore": 45,
+              "intro": "Written by Roman Emperor Marcus Aurelius as a private journal, Meditations is a foundational text of Stoic philosophy. It consists of a series of aphorisms and reflections on duty, mortality, and the nature of the self in relation to the cosmos.",
+              "readingAdvice": "Avoid reading it cover-to-cover in one sitting; instead, treat it as a devotional text and read one 'book' or a few entries at a time. Using an annotated modern translation (such as Gregory Hays) is highly recommended to bridge the gap between ancient Roman context and modern terminology.",
+              "scoreExplanation": "While much more demanding than modern self-help like 'The Obstacle is the Way', it is significantly more accessible than 'Crime and Punishment' due to its fragmented, non-linear structure. The language is direct and lacks the dense narrative complexity of 19th-century literature, but the abstract philosophical concepts and archaic historical references prevent it from being an easy read."
             }
           ],
           "switches": 0
@@ -952,21 +969,29 @@
           "books": [
             {
               "id": "rznjd3q",
-              "title": "",
+              "title": "Faust",
               "author": "",
               "completed": false,
               "totalPages": 0,
               "currentPage": 0,
-              "notes": ""
+              "notes": "",
+              "aiScore": 94,
+              "intro": "Johann Wolfgang von Goethe’s masterpiece is a tragic play in two parts that explores a scholar's pact with the devil, Mephistopheles, in exchange for unlimited knowledge and worldly pleasure. It is considered the pinnacle of German literature, blending philosophy, theology, and classical mythology.",
+              "readingAdvice": "Start with Part I, which is more linear and dramatic, before tackling the highly symbolic and encyclopedic Part II. Use an annotated edition (such as the Walter Arndt translation) to navigate the dense web of historical and mythological references, and consider listening to an audio performance to capture the lyrical rhythm of the verse.",
+              "scoreExplanation": "Faust ranks higher than Crime and Punishment (88) due to its poetic structure, shifting meters, and the immense intellectual scope of Part II. While the plot of Part I is accessible, the work as a whole requires deep familiarity with Western philosophy, alchemy, and Greco-Roman antiquity. The linguistic complexity and the non-linear, phantasmagoric nature of the later acts present a significantly steeper challenge than Marcus Aurelius's aphoristic Meditations (45)."
             },
             {
               "id": "pcgzv2g",
-              "title": "",
+              "title": "In Search of Lost Time",
               "author": "",
               "completed": false,
               "totalPages": 0,
               "currentPage": 0,
-              "notes": ""
+              "notes": "",
+              "aiScore": 98,
+              "intro": "Marcel Proust's multi-volume masterpiece is a profound exploration of memory, time, and the subconscious, told through the recollections of an introspective narrator. It stands as a pinnacle of modernist literature, shifting from social satire to deep philosophical inquiries into the nature of art and human experience.",
+              "readingAdvice": "Approach this as a marathon rather than a sprint; read slowly and allow yourself to get lost in the rhythm of the prose. Using a guide or character map can help track the large cast, and focusing on the sensory details rather than the plot will make the experience more rewarding.",
+              "scoreExplanation": "The difficulty score is exceptionally high due to its massive length (over 1.2 million words) and its notoriously complex, 'serpentine' sentence structure that can span entire pages. While the vocabulary is not as archaic as Faust, the psychological density, lack of traditional narrative momentum, and intricate philosophical digressions require a level of sustained concentration and temporal commitment that exceeds almost any other work of Western fiction."
             }
           ],
           "switches": 0
