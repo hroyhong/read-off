@@ -4,7 +4,7 @@ import { startTransition, useEffect, useOptimistic, useState } from "react";
 import Link from "next/link";
 import { EditableText } from "./EditableText";
 import { DebouncedNumberInput } from "./DebouncedNumberInput";
-import { updateBookTitle, updateName, toggleBookStatus, addPlayer, removePlayer, updateBookTotalPages, updateBookCurrentPage } from "../actions";
+import { updateBookTitle, updateName, toggleBookStatus, addPlayer, removePlayer, updateBookTotalPages, updateBookCurrentPage, addExtraBook, removeBook } from "../actions";
 import type { DB, PlayerData } from "../lib/model";
 import katex from "katex";
 
@@ -119,9 +119,10 @@ export default function Dashboard({ initialData }: DashboardProps) {
     // Score Calculation
     let totalScore = 0;
     
-    // Calculate unfinished books count (x)
+    // Calculate unfinished books count (x) - Skip month 0
     let unfinishedWithScoreCount = 0;
-    Object.values(player.months).forEach(monthData => {
+    Object.entries(player.months).forEach(([m, monthData]) => {
+      if (parseInt(m) === 0) return;
       monthData.books.forEach(book => {
         if (book.aiScore && !book.completed) {
           unfinishedWithScoreCount++;
@@ -129,7 +130,8 @@ export default function Dashboard({ initialData }: DashboardProps) {
       });
     });
 
-    Object.values(player.months).forEach(monthData => {
+    Object.entries(player.months).forEach(([m, monthData]) => {
+      if (parseInt(m) === 0) return;
       monthData.books.forEach(book => {
         if (book.aiScore) {
           if (book.completed) {
@@ -164,7 +166,6 @@ export default function Dashboard({ initialData }: DashboardProps) {
         // Daily target for this month
         const dailyTarget = totalPagesInMonth / daysInMonth;
         
-        // Expected progress up to today
         const expected = dailyTarget * currentDay;
         
         // Actual progress
@@ -175,7 +176,24 @@ export default function Dashboard({ initialData }: DashboardProps) {
         actualProgress = actual;
     }
 
-    return { penalty, completedCount, targetCount, totalDailyTarget, expectedProgress, actualProgress, totalScore };
+    // Monthly Score for active month
+    let monthlyScore = 0;
+    const activeMonthData = player.months[activeMonth.toString()];
+    if (activeMonthData) {
+      activeMonthData.books.forEach(book => {
+        if (book.aiScore) {
+          if (book.completed) {
+            monthlyScore += book.aiScore;
+          } else {
+            const progress = book.totalPages > 0 ? book.currentPage / book.totalPages : 0;
+            const dilutionFactor = 1 / (1 + Math.log(unfinishedWithScoreCount + 1));
+            monthlyScore += book.aiScore * progress * dilutionFactor;
+          }
+        }
+      });
+    }
+
+    return { penalty, completedCount, targetCount, totalDailyTarget, expectedProgress, actualProgress, totalScore, monthlyScore };
   };
 
   const allStats = data.players.map(p => ({ player: p, stats: calculateStats(p) }));
@@ -186,6 +204,8 @@ export default function Dashboard({ initialData }: DashboardProps) {
   const renderBookList = (player: PlayerData) => {
     const monthData = player.months[activeMonth.toString()];
     if (!monthData) return null;
+    
+    const stats = calculateStats(player);
 
     const showPenalty = activeMonth > 0 && currentSimulatedMonth > 0 && activeMonth <= currentSimulatedMonth;
     const missedBooks = monthData.books.length - monthData.books.filter(b => b.completed).length;
@@ -261,13 +281,26 @@ export default function Dashboard({ initialData }: DashboardProps) {
                         </div>
                         
                         {/* Book Score Display - Dark font, outside background */}
-                        {book.aiScore && (
-                            <Link href={`/book/${player.id}/${activeMonth}/${index}`} className="flex-shrink-0">
-                                <div className="text-2xl font-bold text-black hover:text-gray-500 transition-colors">
-                                    {book.aiScore}
-                                </div>
-                            </Link>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {book.aiScore && (
+                                <Link href={`/book/${player.id}/${activeMonth}/${index}`} className="flex-shrink-0">
+                                    <div className="text-2xl font-bold text-black hover:text-gray-500 transition-colors">
+                                        {book.aiScore}
+                                    </div>
+                                </Link>
+                            )}
+                            <button
+                                onClick={() => {
+                                    if (confirm("Remove this book?")) {
+                                        removeBook(player.id, activeMonth, index);
+                                    }
+                                }}
+                                className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors text-lg leading-none"
+                                title="Remove book"
+                            >
+                                ×
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -275,15 +308,25 @@ export default function Dashboard({ initialData }: DashboardProps) {
         );
         })}
         
+        {/* Add Book Button */}
+        <button
+          onClick={() => addExtraBook(player.id, activeMonth)}
+          className="w-full py-2 mt-2 border border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:border-gray-400 hover:text-gray-600 transition-colors"
+        >
+          + Add Book
+        </button>
+        
         
         <div className="pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
-            <span>
-              {activeMonth === 0 ? "Test month, no penalty" : 
-                showPenalty && missedBooks > 0 
-                  ? `Penalty this month: ¥${missedBooks * PENALTY_PER_BOOK}`
-                  : "Not settled yet"
-              }
-            </span>
+            <div className="flex flex-col gap-1">
+              <span>
+                {activeMonth === 0 ? "Test month, no penalty" : 
+                  showPenalty && missedBooks > 0 
+                    ? `Penalty this month: ¥${missedBooks * PENALTY_PER_BOOK}`
+                    : "Not settled yet"
+                }
+              </span>
+            </div>
         </div>
       </div>
     );
@@ -332,25 +375,30 @@ export default function Dashboard({ initialData }: DashboardProps) {
         {/* Overview Cards - Dynamic grid based on player count */}
         <div className={`grid gap-8 mb-16 ${data.players.length <= 2 ? 'grid-cols-2' : data.players.length <= 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
           {allStats.map(({ player, stats }) => (
-            <div key={player.id} className="space-y-4">
-              <div className="flex justify-between items-baseline">
-                <Link href={`/player/${player.id}`} className="text-lg font-medium hover:underline decoration-gray-400 underline-offset-2">
-                  {player.name}
-                </Link>
-                <span className="text-xs font-mono text-gray-400">{stats.completedCount}/{stats.targetCount}</span>
+            <div key={player.id} className="p-5 bg-gray-50 rounded-2xl space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <Link href={`/player/${player.id}`} className="text-lg font-bold hover:underline decoration-gray-400 underline-offset-2">
+                    {player.name}
+                  </Link>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">Reader Score</div>
+                </div>
+                <div className="text-3xl font-bold font-mono leading-none">
+                  {Math.round(stats.totalScore)}
+                </div>
               </div>
               
-              <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-black rounded-full transition-all duration-500"
-                  style={{ width: `${(stats.completedCount / Math.max(1, stats.targetCount)) * 100}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs">
-                  <span className="text-gray-400">Score Share</span>
-                  <span className="font-medium">
-                      {Math.round(stats.totalScore)} <span className="text-gray-300">({totalSystemScore > 0 ? Math.round((stats.totalScore / totalSystemScore) * 100) : 0}%)</span>
-                  </span>
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] uppercase tracking-wider text-gray-400 font-medium">
+                  <span>Progress</span>
+                  <span>{stats.completedCount}/{stats.targetCount}</span>
+                </div>
+                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-black rounded-full transition-all duration-500"
+                    style={{ width: `${(stats.completedCount / Math.max(1, stats.targetCount)) * 100}%` }}
+                  />
+                </div>
               </div>
               <div className="flex justify-between text-xs">
                   <span className="text-gray-400">Potential Payout</span>
@@ -438,9 +486,9 @@ export default function Dashboard({ initialData }: DashboardProps) {
 
                   return (
                     <div className="w-full mb-6 space-y-3">
-                        {/* Reader Score - Simple display */}
+                        {/* Monthly Score - Prominent in header */}
                         <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold font-mono">{Math.round(playerStats?.totalScore || 0)}</span>
+                            <span className="text-3xl font-bold font-mono">{Math.round(playerStats?.monthlyScore || 0)}</span>
                             <span className="text-xs text-gray-400">pts</span>
                         </div>
 

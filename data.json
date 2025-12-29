@@ -10,9 +10,9 @@
               "id": "x9byri",
               "title": "罪与罚",
               "author": "陀思妥耶夫斯基",
-              "completed": false,
+              "completed": true,
               "totalPages": 1040,
-              "currentPage": 880,
+              "currentPage": 1040,
               "notes": "",
               "aiScore": 88,
               "reasoning": "The novel presents significant psychological complexity, dense philosophical monologues, and a convoluted multi-layered plot. Readers must navigate intense existential themes and 19th-century Russian social contexts, making it a demanding yet rewarding intellectual challenge.",
@@ -470,7 +470,7 @@
         "0": {
           "books": [
             {
-              "id": "4e6w4c",
+              "id": "kd3btxz",
               "title": "",
               "author": "",
               "completed": false,

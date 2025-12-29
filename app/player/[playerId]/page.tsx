@@ -40,20 +40,24 @@ export default function PlayerPage({ params }: PageProps) {
   let readerScore = 0;
   let unfinishedCount = 0;
 
-  // First pass: count unfinished books with scores
-  Object.values(player.months).forEach(month => {
-    month.books.forEach(b => {
+  // First pass: count unfinished books with scores - Skip month 0
+  Object.entries(player.months).forEach(([m, monthData]) => {
+    if (parseInt(m) === 0) return;
+    monthData.books.forEach(b => {
       if (b.aiScore && !b.completed) unfinishedCount++;
     });
   });
 
   // Second pass: calculate all stats
-  Object.values(player.months).forEach(month => {
-    totalBooks += month.books.length;
-    totalCompleted += month.books.filter(b => b.completed).length;
-    totalPagesRead += month.books.reduce((sum, b) => sum + (b.completed ? b.totalPages : b.currentPage), 0);
+  Object.entries(player.months).forEach(([m, monthData]) => {
+    const monthInt = parseInt(m);
+    totalBooks += monthData.books.length;
+    totalCompleted += monthData.books.filter(b => b.completed).length;
+    totalPagesRead += monthData.books.reduce((sum, b) => sum + (b.currentPage || 0), 0);
     
-    month.books.forEach(b => {
+    if (monthInt === 0) return; // Skip month 0 for scoring
+
+    monthData.books.forEach(b => {
       if (b.aiScore) {
         if (b.completed) {
           readerScore += b.aiScore;
@@ -94,7 +98,7 @@ export default function PlayerPage({ params }: PageProps) {
             <div className="text-3xl font-bold">{totalCompleted} <span className="text-lg text-gray-400 font-normal">/ {totalBooks}</span></div>
           </div>
           <div className="p-6 bg-gray-50 rounded-xl">
-            <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Total Pages</div>
+            <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Total Pages Read</div>
             <div className="text-3xl font-bold">{totalPagesRead}</div>
           </div>
           <div className="p-6 bg-gray-50 rounded-xl">

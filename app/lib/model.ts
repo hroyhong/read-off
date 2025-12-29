@@ -116,7 +116,7 @@ function normalizePlayerMonths(player: PlayerData) {
     if (!Array.isArray(monthData.books)) monthData.books = [];
     monthData.books = (monthData.books as unknown[]).map(normalizeBook);
 
-    // 如果 books 数量不够，补齐；如果多了，截断（保持规则一致）
+    // 如果 books 数量不够，补齐；不再截断多出的书
     const need = MONTHLY_TARGETS[m];
     if (monthData.books.length < need) {
       monthData.books.push(
@@ -130,9 +130,6 @@ function normalizePlayerMonths(player: PlayerData) {
           notes: "",
         }))
       );
-    }
-    if (monthData.books.length > need) {
-      monthData.books = monthData.books.slice(0, need);
     }
 
     if (typeof monthData.switches !== "number") monthData.switches = 0;

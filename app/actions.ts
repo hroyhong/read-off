@@ -168,3 +168,37 @@ export async function rateBook(playerId: string, month: number, bookIndex: numbe
     return rating;
   }
 }
+
+// Action: 添加额外的书
+export async function addExtraBook(playerId: string, month: number) {
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  const monthKey = month.toString();
+  
+  if (player?.months[monthKey]) {
+    player.months[monthKey].books.push({
+      id: Math.random().toString(36).substring(2, 9),
+      title: "",
+      author: "",
+      completed: false,
+      totalPages: 0,
+      currentPage: 0,
+      notes: "",
+    });
+    await saveDB(db);
+    revalidatePath("/");
+  }
+}
+
+// Action: 删除书
+export async function removeBook(playerId: string, month: number, bookIndex: number) {
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  const monthKey = month.toString();
+  
+  if (player?.months[monthKey]?.books[bookIndex]) {
+    player.months[monthKey].books.splice(bookIndex, 1);
+    await saveDB(db);
+    revalidatePath("/");
+  }
+}
