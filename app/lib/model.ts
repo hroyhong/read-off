@@ -43,6 +43,7 @@ export type PlayerData = {
   id: string;
   name: string;
   months: Record<string, MonthData>;
+  readingDates: string[]; // ISO date strings: "YYYY-MM-DD"
 };
 
 // New DB structure: array of players
@@ -59,6 +60,7 @@ export function createEmptyPlayer(name: string): PlayerData {
     id: makeId(),
     name,
     months: {},
+    readingDates: [],
   };
   normalizePlayerMonths(player);
   return player;
@@ -149,6 +151,7 @@ export function normalizeDBInPlace(db: DB) {
         id: makeId(),
         name: typeof p1.name === "string" ? p1.name : "Player 1",
         months: (p1.months as Record<string, MonthData>) || {},
+        readingDates: [],
       });
     }
     
@@ -158,6 +161,7 @@ export function normalizeDBInPlace(db: DB) {
         id: makeId(),
         name: typeof p2.name === "string" ? p2.name : "Player 2",
         months: (p2.months as Record<string, MonthData>) || {},
+        readingDates: [],
       });
     }
     
@@ -175,6 +179,7 @@ export function normalizeDBInPlace(db: DB) {
   for (const player of db.players) {
     if (!player.id) player.id = makeId();
     if (!player.name) player.name = "Player";
+    if (!Array.isArray(player.readingDates)) player.readingDates = [];
     normalizePlayerMonths(player);
   }
 }

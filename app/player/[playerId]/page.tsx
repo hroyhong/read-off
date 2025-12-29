@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { updateName, getData } from "../../actions";
+import { updateName, getData, toggleReadingDate } from "../../actions";
 import { EditableText } from "../../components/EditableText";
+import { Calendar } from "../../components/Calendar";
 import type { PlayerData } from "../../lib/model";
 
 interface PageProps {
@@ -70,6 +71,61 @@ export default function PlayerPage({ params }: PageProps) {
     });
   });
 
+  // Calculate reading stats
+  const sortedDates = [...player.readingDates].sort();
+  const totalDaysRead = sortedDates.length;
+  
+  // Calculate current streak
+  let currentStreak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  for (let i = 0; i <= 365; i++) {
+    const checkDate = new Date(today);
+    checkDate.setDate(checkDate.getDate() - i);
+    const dateStr = checkDate.toISOString().split('T')[0];
+    
+    if (sortedDates.includes(dateStr)) {
+      currentStreak++;
+    } else {
+      break;
+    }
+  }
+  
+  // Calculate longest streak
+  let longestStreak = 0;
+  let tempStreak = 0;
+  let prevDate: Date | null = null;
+  
+  sortedDates.forEach(dateStr => {
+    const date = new Date(dateStr);
+    
+    if (prevDate) {
+      const diffDays = Math.floor((date.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays === 1) {
+        tempStreak++;
+      } else {
+        longestStreak = Math.max(longestStreak, tempStreak);
+        tempStreak = 1;
+      }
+    } else {
+      tempStreak = 1;
+    }
+    
+    prevDate = date;
+  });
+  longestStreak = Math.max(longestStreak, tempStreak);
+
+  const handleToggleDate = async (date: string) => {
+    await toggleReadingDate(playerId, date);
+    // Refresh data
+    const db = await getData();
+    const p = db.players.find(p => p.id === playerId);
+    if (p) {
+      setPlayer(p);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans p-6 max-w-2xl mx-auto">
       <Link href="/" className="text-sm text-gray-400 hover:text-black mb-8 block">
@@ -105,6 +161,32 @@ export default function PlayerPage({ params }: PageProps) {
             <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Reader Score</div>
             <div className="text-3xl font-bold">{Math.round(readerScore)} <span className="text-lg text-gray-400 font-normal">pts</span></div>
           </div>
+        </div>
+
+        {/* Reading Calendar */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-medium">Reading Calendar</h2>
+          
+          {/* Reading Stats */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Days Read</div>
+              <div className="text-2xl font-bold">{totalDaysRead}</div>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Current Streak</div>
+              <div className="text-2xl font-bold">{currentStreak} 🔥</div>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Longest Streak</div>
+              <div className="text-2xl font-bold">{longestStreak}</div>
+            </div>
+          </div>
+          
+          <Calendar 
+            readingDates={player.readingDates}
+            onToggleDate={handleToggleDate}
+          />
         </div>
 
         {/* Book List by Month */}

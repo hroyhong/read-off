@@ -202,3 +202,22 @@ export async function removeBook(playerId: string, month: number, bookIndex: num
     revalidatePath("/");
   }
 }
+
+// Action: Toggle reading date
+export async function toggleReadingDate(playerId: string, date: string) {
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  
+  if (player) {
+    const index = player.readingDates.indexOf(date);
+    if (index > -1) {
+      // Remove date
+      player.readingDates.splice(index, 1);
+    } else {
+      // Add date
+      player.readingDates.push(date);
+    }
+    await saveDB(db);
+    revalidatePath(`/player/${playerId}`);
+  }
+}
