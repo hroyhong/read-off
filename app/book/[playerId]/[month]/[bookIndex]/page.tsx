@@ -182,10 +182,15 @@ export default function BookPage({ params }: PageProps) {
             <input
               type="number"
               value={book.currentPage || ""}
-              onChange={async (e) => {
+              onChange={(e) => {
                 const val = parseFloat(e.target.value);
                 setBook(prev => prev ? { ...prev, currentPage: val } : null);
-                await updateBookCurrentPage(playerId, month, bookIndex, val);
+              }}
+              onBlur={async (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                  await updateBookCurrentPage(playerId, month, bookIndex, val);
+                }
               }}
               className="text-2xl font-mono font-medium bg-transparent border-b border-gray-300 focus:border-black outline-none w-24"
               placeholder="0"
@@ -196,10 +201,15 @@ export default function BookPage({ params }: PageProps) {
             <input
               type="number"
               value={book.totalPages || ""}
-              onChange={async (e) => {
+              onChange={(e) => {
                 const val = parseFloat(e.target.value);
                 setBook(prev => prev ? { ...prev, totalPages: val } : null);
-                await updateBookTotalPages(playerId, month, bookIndex, val);
+              }}
+              onBlur={async (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                  await updateBookTotalPages(playerId, month, bookIndex, val);
+                }
               }}
               className="text-2xl font-mono font-medium bg-transparent border-b border-gray-300 focus:border-black outline-none w-24"
               placeholder="0"

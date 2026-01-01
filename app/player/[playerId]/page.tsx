@@ -54,7 +54,12 @@ export default function PlayerPage({ params }: PageProps) {
     const monthInt = parseInt(m);
     totalBooks += monthData.books.length;
     totalCompleted += monthData.books.filter(b => b.completed).length;
-    totalPagesRead += monthData.books.reduce((sum, b) => sum + (b.currentPage || 0), 0);
+    
+    // For pages read: only count pages read THIS MONTH (currentPage - startingPage)
+    totalPagesRead += monthData.books.reduce((sum, b) => {
+      const pagesThisMonth = (b.currentPage || 0) - (b.startingPage || 0);
+      return sum + pagesThisMonth;
+    }, 0);
     
     if (monthInt === 0) return; // Skip month 0 for scoring
 
@@ -63,7 +68,9 @@ export default function PlayerPage({ params }: PageProps) {
         if (b.completed) {
           readerScore += b.aiScore;
         } else {
-          const progress = b.totalPages > 0 ? b.currentPage / b.totalPages : 0;
+          // Use pages read THIS MONTH for progress calculation
+          const pagesThisMonth = b.currentPage - (b.startingPage || 0);
+          const progress = b.totalPages > 0 ? pagesThisMonth / b.totalPages : 0;
           const dilution = 1 / (1 + Math.log(unfinishedCount + 1));
           readerScore += b.aiScore * progress * dilution;
         }
