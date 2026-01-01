@@ -6,6 +6,7 @@ import { EditableText } from "./EditableText";
 import { DebouncedNumberInput } from "./DebouncedNumberInput";
 import { updateBookTitle, updateName, toggleBookStatus, addPlayer, removePlayer, updateBookTotalPages, updateBookCurrentPage, addExtraBook, removeBook } from "../actions";
 import type { DB, PlayerData } from "../lib/model";
+import { MONTHLY_TARGETS } from "../lib/model";
 import katex from "katex";
 
 const PENALTY_PER_BOOK = 50;
@@ -101,19 +102,46 @@ export default function Dashboard({ initialData }: DashboardProps) {
 
     Object.entries(player.months).forEach(([m, monthData]) => {
       const monthInt = parseInt(m);
-      if (monthInt === 0) return; 
+      if (monthInt === 0) return; // Skip test month
 
-      const shouldCalculatePenalty = currentSimulatedMonth > 0 && monthInt <= currentSimulatedMonth;
-      const target = monthData.books.length;
-      const completed = monthData.books.filter(b => b.completed).length;
+      const isPastMonth = currentSimulatedMonth > 0 && monthInt < currentSimulatedMonth;
+      const targetBooks = MONTHLY_TARGETS[monthInt] || monthData.books.length;
+      const targetScore = targetBooks * 50;
+      const completedBooks = monthData.books.filter(b => b.completed).length;
       
-      if (shouldCalculatePenalty) {
-        const missed = Math.max(0, target - completed);
-        penalty += missed * PENALTY_PER_BOOK;
+      // Calculate monthly score for this month
+      let monthScore = 0;
+      let unfinishedInMonth = 0;
+      monthData.books.forEach(b => {
+        if (b.aiScore && !b.completed) unfinishedInMonth++;
+      });
+      
+      monthData.books.forEach(book => {
+        if (book.aiScore) {
+          if (book.completed) {
+            monthScore += book.aiScore;
+          } else {
+            const progress = book.totalPages > 0 ? book.currentPage / book.totalPages : 0;
+            const dilutionFactor = 1 / (1 + Math.log(unfinishedInMonth + 1));
+            monthScore += book.aiScore * progress * dilutionFactor;
+          }
+        }
+      });
+      
+      // Check pass conditions (only for past months)
+      if (isPastMonth) {
+        const passedByBooks = completedBooks >= targetBooks;
+        const passedByScore = monthScore >= targetScore;
+        const passed = passedByBooks || passedByScore;
+        
+        if (!passed) {
+          // Penalty = score deficit
+          penalty += Math.max(0, targetScore - monthScore);
+        }
       }
       
-      targetCount += target;
-      completedCount += completed;
+      targetCount += targetBooks;
+      completedCount += completedBooks;
     });
 
     // Score Calculation
@@ -321,9 +349,44 @@ export default function Dashboard({ initialData }: DashboardProps) {
             <div className="flex flex-col gap-1">
               <span>
                 {activeMonth === 0 ? "Test month, no penalty" : 
-                  showPenalty && missedBooks > 0 
-                    ? `Penalty this month: ¥${missedBooks * PENALTY_PER_BOOK}`
-                    : "Not settled yet"
+                  (() => {
+                    const targetBooks = MONTHLY_TARGETS[activeMonth] || monthData.books.length;
+                    const targetScore = targetBooks * 50;
+                    const completedBooks = monthData.books.filter(b => b.completed).length;
+                    
+                    // Calculate monthly score
+                    let monthScore = 0;
+                    let unfinishedInMonth = 0;
+                    monthData.books.forEach(b => {
+                      if (b.aiScore && !b.completed) unfinishedInMonth++;
+                    });
+                    
+                    monthData.books.forEach(book => {
+                      if (book.aiScore) {
+                        if (book.completed) {
+                          monthScore += book.aiScore;
+                        } else {
+                          const progress = book.totalPages > 0 ? book.currentPage / book.totalPages : 0;
+                          const dilutionFactor = 1 / (1 + Math.log(unfinishedInMonth + 1));
+                          monthScore += book.aiScore * progress * dilutionFactor;
+                        }
+                      }
+                    });
+                    
+                    const passedByBooks = completedBooks >= targetBooks;
+                    const passedByScore = monthScore >= targetScore;
+                    const passed = passedByBooks || passedByScore;
+                    const isPast = currentSimulatedMonth > 0 && activeMonth < currentSimulatedMonth;
+                    
+                    if (!isPast) {
+                      return `Target: ${targetBooks} books OR ${targetScore} points`;
+                    } else if (passed) {
+                      return "✓ Passed";
+                    } else {
+                      const deficit = Math.max(0, targetScore - monthScore);
+                      return `✗ Failed - Penalty: ¥${Math.round(deficit)}`;
+                    }
+                  })()
                 }
               </span>
             </div>
@@ -509,9 +572,13 @@ export default function Dashboard({ initialData }: DashboardProps) {
         {/* Rules Footer with Formula */}
         <footer className="mt-32 pt-12 border-t border-gray-100 text-xs text-gray-400 leading-relaxed space-y-4">
           <div>
-            <p>Rules: Jan 1 book, Feb 2 books, Mar 3 books, Apr-Dec 4 books/month.</p>
-            <p>Penalty: ¥50 per missed book.</p>
-            <p>Winners split the penalty pool at year end.</p>
+            <p className="font-medium text-gray-500 mb-2">Rules:</p>
+            <p>• Monthly targets: Jan 1 book, Feb 2 books, Mar 3 books, Apr-Dec 4 books/month</p>
+            <p>• Pass conditions: Complete target books OR achieve target score (50 points per book)</p>
+            <p className="mt-1 text-gray-300">  Example: April requires 4 books OR 200 points</p>
+            <p className="mt-2">• Penalty: If you fail both conditions, pay ¥(target score - your score)</p>
+            <p className="mt-1 text-gray-300">  Example: 150 points in April → ¥(200-150) = ¥50 penalty</p>
+            <p className="mt-2">• Winners: Players who pass all months split the penalty pool</p>
           </div>
           <div className="pt-4 border-t border-gray-50">
             <p className="text-gray-300 mb-2">Reader Score Formula:</p>

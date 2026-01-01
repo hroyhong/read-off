@@ -27,11 +27,20 @@
           "books": [
             {
               "id": "je3ufc",
-              "title": "",
+              "title": "as fasf",
               "author": "",
               "completed": false,
               "totalPages": 100,
               "currentPage": 20,
+              "notes": ""
+            },
+            {
+              "id": "pqeqvtj",
+              "title": "adf",
+              "author": "",
+              "completed": false,
+              "totalPages": 0,
+              "currentPage": 0,
               "notes": ""
             }
           ],
