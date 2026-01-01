@@ -23,9 +23,8 @@ export type Book = {
   author: string;
   completed: boolean;
   totalPages: number;
-
   currentPage: number;
-
+  startingPage: number; // Page number when this book was added to this month
   notes: string;
   aiScore?: number;
   reasoning?: string;
@@ -84,13 +83,14 @@ function normalizePlayerMonths(player: PlayerData) {
     const completed = !!b.completed;
     const totalPages = typeof b.totalPages === "number" ? b.totalPages : 0;
     const currentPage = typeof b.currentPage === "number" ? b.currentPage : 0;
+    const startingPage = typeof b.startingPage === "number" ? b.startingPage : 0;
     const notes = typeof b.notes === "string" ? b.notes : "";
     const aiScore = typeof b.aiScore === "number" ? b.aiScore : undefined;
     const reasoning = typeof b.reasoning === "string" ? b.reasoning : undefined;
     const intro = typeof b.intro === "string" ? b.intro : undefined;
     const readingAdvice = typeof b.readingAdvice === "string" ? b.readingAdvice : undefined;
     const scoreExplanation = typeof b.scoreExplanation === "string" ? b.scoreExplanation : undefined;
-    return { id, title, author, completed, totalPages, currentPage, notes, aiScore, reasoning, intro, readingAdvice, scoreExplanation };
+    return { id, title, author, completed, totalPages, currentPage, startingPage, notes, aiScore, reasoning, intro, readingAdvice, scoreExplanation };
   };
 
   if (!player.months) player.months = {};
@@ -106,6 +106,7 @@ function normalizePlayerMonths(player: PlayerData) {
           completed: false,
           totalPages: 0,
           currentPage: 0,
+          startingPage: 0,
           notes: "",
         })),
         switches: 0,
@@ -129,6 +130,7 @@ function normalizePlayerMonths(player: PlayerData) {
           completed: false,
           totalPages: 0,
           currentPage: 0,
+          startingPage: 0,
           notes: "",
         }))
       );

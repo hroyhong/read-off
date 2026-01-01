@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { updateBookTitle, updateBookAuthor, updateBookTotalPages, updateBookCurrentPage, updateBookNotes, rateBook, getData } from "../../../../actions";
+import { updateBookTitle, updateBookAuthor, updateBookTotalPages, updateBookCurrentPage, updateBookNotes, rateBook, getData, detectBookContinuation } from "../../../../actions";
 import { EditableText } from "../../../../components/EditableText";
 import type { Book, PlayerData } from "../../../../lib/model";
 
@@ -81,18 +81,36 @@ export default function BookPage({ params }: PageProps) {
     }
     setAnalyzing(true);
     try {
-      const rating = await rateBook(playerId, month, bookIndex);
-      if (rating) {
-        setBook(prev => prev ? { 
-          ...prev, 
-          aiScore: rating.score,
-          intro: rating.intro,
-          readingAdvice: rating.readingAdvice,
-          scoreExplanation: rating.scoreExplanation
-        } : null);
+      // Import the new action
+      const { copyBookFromPreviousMonth } = await import("../../../../actions");
+      
+      // Try to copy from previous month
+      const foundPrevious = await copyBookFromPreviousMonth(playerId, month, bookIndex);
+      
+      if (foundPrevious) {
+        // Refresh book data
+        const db = await getData();
+        const p = db.players.find(p => p.id === playerId);
+        const b = p?.months[month.toString()]?.books[bookIndex];
+        if (b) {
+          setBook(b);
+        }
+      } else {
+        // New book - proceed with AI rating
+        const rating = await rateBook(playerId, month, bookIndex);
+        if (rating) {
+          setBook(prev => prev ? { 
+            ...prev, 
+            aiScore: rating.score,
+            intro: rating.intro,
+            readingAdvice: rating.readingAdvice,
+            scoreExplanation: rating.scoreExplanation
+          } : null);
+        }
       }
     } catch (e) {
-      alert("Failed to analyze book. Please check API key.");
+      console.error(e);
+      alert("Failed to process book. Please try again.");
     } finally {
       setAnalyzing(false);
     }
@@ -133,6 +151,13 @@ export default function BookPage({ params }: PageProps) {
               onSave={async (val) => {
                 setBook(prev => prev ? { ...prev, title: val } : null);
                 await updateBookTitle(playerId, month, bookIndex, val);
+                // Detect if this is a continuation
+                await detectBookContinuation(playerId, month, bookIndex);
+                // Refresh book data
+                const db = await getData();
+                const p = db.players.find(p => p.id === playerId);
+                const b = p?.months[month.toString()]?.books[bookIndex];
+                if (b) setBook(b);
               }}
               placeholder="Book Title"
               className="w-full"
@@ -184,6 +209,16 @@ export default function BookPage({ params }: PageProps) {
             <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Progress</label>
             <div className="text-2xl font-mono font-medium text-gray-400">{progress}%</div>
           </div>
+          
+          {/* Show continuation info if startingPage > 0 */}
+          {book.startingPage > 0 && (
+            <div>
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">This Month</label>
+              <div className="text-sm text-gray-500">
+                Pages {book.startingPage + 1}-{book.currentPage} ({book.currentPage - book.startingPage} pages)
+              </div>
+            </div>
+          )}
           
           {/* Read Button */}
           <div className="ml-auto">

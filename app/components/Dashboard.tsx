@@ -4,7 +4,7 @@ import { startTransition, useEffect, useOptimistic, useState } from "react";
 import Link from "next/link";
 import { EditableText } from "./EditableText";
 import { DebouncedNumberInput } from "./DebouncedNumberInput";
-import { updateBookTitle, updateName, toggleBookStatus, addPlayer, removePlayer, updateBookTotalPages, updateBookCurrentPage, addExtraBook, removeBook } from "../actions";
+import { updateBookTitle, updateName, toggleBookStatus, addPlayer, removePlayer, updateBookTotalPages, updateBookCurrentPage, addExtraBook, removeBook, detectBookContinuation } from "../actions";
 import type { DB, PlayerData } from "../lib/model";
 import { MONTHLY_TARGETS } from "../lib/model";
 import katex from "katex";
@@ -121,9 +121,11 @@ export default function Dashboard({ initialData }: DashboardProps) {
           if (book.completed) {
             monthScore += book.aiScore;
           } else {
-            const progress = book.totalPages > 0 ? book.currentPage / book.totalPages : 0;
+            // Calculate pages read THIS MONTH only
+            const pagesReadThisMonth = book.currentPage - book.startingPage;
+            const progressThisMonth = book.totalPages > 0 ? pagesReadThisMonth / book.totalPages : 0;
             const dilutionFactor = 1 / (1 + Math.log(unfinishedInMonth + 1));
-            monthScore += book.aiScore * progress * dilutionFactor;
+            monthScore += book.aiScore * progressThisMonth * dilutionFactor;
           }
         }
       });
@@ -213,9 +215,11 @@ export default function Dashboard({ initialData }: DashboardProps) {
           if (book.completed) {
             monthlyScore += book.aiScore;
           } else {
-            const progress = book.totalPages > 0 ? book.currentPage / book.totalPages : 0;
+            // Calculate pages read THIS MONTH only
+            const pagesReadThisMonth = book.currentPage - book.startingPage;
+            const progressThisMonth = book.totalPages > 0 ? pagesReadThisMonth / book.totalPages : 0;
             const dilutionFactor = 1 / (1 + Math.log(unfinishedWithScoreCount + 1));
-            monthlyScore += book.aiScore * progress * dilutionFactor;
+            monthlyScore += book.aiScore * progressThisMonth * dilutionFactor;
           }
         }
       });

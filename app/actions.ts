@@ -183,6 +183,7 @@ export async function addExtraBook(playerId: string, month: number) {
       completed: false,
       totalPages: 0,
       currentPage: 0,
+      startingPage: 0,
       notes: "",
     });
     await saveDB(db);
@@ -220,4 +221,73 @@ export async function toggleReadingDate(playerId: string, date: string) {
     await saveDB(db);
     revalidatePath(`/player/${playerId}`);
   }
+}
+
+// Action: Detect and set book continuation
+export async function detectBookContinuation(playerId: string, month: number, bookIndex: number) {
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  const monthKey = month.toString();
+  
+  if (player?.months[monthKey]?.books[bookIndex]) {
+    const book = player.months[monthKey].books[bookIndex];
+    
+    // Search previous months for same book title
+    let previousProgress = 0;
+    for (let m = month - 1; m >= 0; m--) {
+      const prevMonthData = player.months[m.toString()];
+      if (prevMonthData) {
+        const matchingBook = prevMonthData.books.find(b => 
+          b.title.trim().toLowerCase() === book.title.trim().toLowerCase() && b.title.trim() !== ""
+        );
+        if (matchingBook) {
+          previousProgress = matchingBook.currentPage;
+          break;
+        }
+      }
+    }
+    
+    book.startingPage = previousProgress;
+    await saveDB(db);
+    revalidatePath("/");
+    revalidatePath(`/book/${playerId}/${month}/${bookIndex}`);
+  }
+}
+
+// Action: Copy book from previous month
+export async function copyBookFromPreviousMonth(playerId: string, month: number, bookIndex: number) {
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  const monthKey = month.toString();
+  
+  if (player?.months[monthKey]?.books[bookIndex]) {
+    const book = player.months[monthKey].books[bookIndex];
+    
+    // Search previous months for same book title
+    for (let m = month - 1; m >= 0; m--) {
+      const prevMonthData = player.months[m.toString()];
+      if (prevMonthData) {
+        const matchingBook = prevMonthData.books.find(b => 
+          b.title.trim().toLowerCase() === book.title.trim().toLowerCase() && b.title.trim() !== ""
+        );
+        
+        if (matchingBook) {
+          // Copy all data from previous month
+          book.author = matchingBook.author;
+          book.totalPages = matchingBook.totalPages;
+          book.startingPage = matchingBook.currentPage;
+          book.aiScore = matchingBook.aiScore;
+          book.intro = matchingBook.intro;
+          book.readingAdvice = matchingBook.readingAdvice;
+          book.scoreExplanation = matchingBook.scoreExplanation;
+          
+          await saveDB(db);
+          revalidatePath("/");
+          revalidatePath(`/book/${playerId}/${month}/${bookIndex}`);
+          return true; // Found and copied
+        }
+      }
+    }
+  }
+  return false; // Not found
 }
