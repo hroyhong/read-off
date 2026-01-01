@@ -169,8 +169,9 @@ export default function Dashboard({ initialData }: DashboardProps) {
             totalScore += book.aiScore;
           } else {
             // Diluted score for unfinished books: Score * Progress * (1 / (1 + ln(n+1)))
-            // n = number of unfinished books with scores
-            const progress = book.totalPages > 0 ? book.currentPage / book.totalPages : 0;
+            // Use pages read THIS MONTH for progress
+            const pagesThisMonth = book.currentPage - (book.startingPage || 0);
+            const progress = book.totalPages > 0 ? pagesThisMonth / book.totalPages : 0;
             const dilutionFactor = 1 / (1 + Math.log(unfinishedWithScoreCount + 1));
             totalScore += book.aiScore * progress * dilutionFactor;
           }
