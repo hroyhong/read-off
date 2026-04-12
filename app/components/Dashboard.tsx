@@ -91,7 +91,8 @@ export default function Dashboard({ initialData }: DashboardProps) {
 
   const allStats = data.players.map(p => ({ player: p, stats: calcStats(p) }));
   const totalPenalty = allStats.reduce((sum, { stats }) => sum + stats.penalty, 0);
-  const totalSystemScore = allStats.reduce((sum, { stats }) => sum + stats.totalScore, 0);
+  const eligibleStats = allStats.filter(({ stats }) => stats.eligible);
+  const eligibleTotalScore = eligibleStats.reduce((sum, { stats }) => sum + stats.totalScore, 0);
 
   const renderBookList = (player: PlayerData) => {
     const monthData = player.months[activeMonth.toString()];
@@ -288,7 +289,7 @@ export default function Dashboard({ initialData }: DashboardProps) {
                 <div className="flex gap-1.5">
                   <span className="text-ink-3">Payout</span>
                   <span className="text-pass font-medium">
-                    ¥{stats.eligible && totalSystemScore > 0 ? Math.round(totalPenalty * (stats.totalScore / totalSystemScore)) : 0}
+                    ¥{stats.eligible && eligibleTotalScore > 0 ? Math.round(totalPenalty * (stats.totalScore / eligibleTotalScore)) : 0}
                   </span>
                 </div>
                 <div className="flex gap-1.5">
