@@ -25,7 +25,8 @@ export async function getAiRating(title: string, author: string, contextBooks: s
     Provide:
     1. Book Score (0-100): A score reflecting the TIME and ENERGY required to read this book. Consider:
        - Reading complexity (dense prose, technical jargon, philosophical depth)
-       - Length and time commitment
+       - Language books are read in the language according to the title lanague. Reward books read in english over other languages.
+       - Length and time commitment (A good short book shouldn't be too high)
        - Mental effort required
        - Compare relatively to the other books in the list (without naming them) - is this harder or easier?
        Higher score = more challenging = more reward.
@@ -44,7 +45,7 @@ export async function getAiRating(title: string, author: string, contextBooks: s
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free",
+        model: process.env.OPENROUTER_MODEL || "qwen/qwen3.6-plus",
         messages: [
           { role: "system", content: "You are a literary critic and difficulty assessor. Output JSON only." },
           { role: "user", content: prompt }

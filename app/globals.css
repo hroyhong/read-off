@@ -1,34 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500;6..72,600;6..72,700&display=swap');
 @import "tailwindcss";
 @import "katex/dist/katex.min.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #111111;
-  --muted: #f5f5f5;
-  --border: #e5e5e5;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-parchment: #f6f3ec;
+  --color-card: #fffef9;
+  --color-ink: #2c2418;
+  --color-ink-2: #7c7264;
+  --color-ink-3: #b5ae9e;
+  --color-rule: #e4dfd4;
+  --color-surface: #eeebe2;
+  --color-penalty: #b94a3a;
+  --color-pass: #4a7c5a;
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* 隐藏滚动条但允许滚动 */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-input:focus {
-  outline: none;
+input:focus, textarea:focus { outline: none; }
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
 }

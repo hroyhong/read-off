@@ -254,6 +254,67 @@ export async function detectBookContinuation(playerId: string, month: number, bo
   }
 }
 
+// Action: Continue all unfinished books from previous month
+export async function continueUnfinishedBooks(playerId: string, month: number) {
+  if (month <= 0) return [];
+  const db = await loadDB();
+  const player = findPlayer(db, playerId);
+  if (!player) return [];
+
+  const prevMonthData = player.months[(month - 1).toString()];
+  if (!prevMonthData) return [];
+
+  const monthKey = month.toString();
+  if (!player.months[monthKey]) return [];
+
+  const currentBooks = player.months[monthKey].books;
+  const currentTitles = new Set(currentBooks.map(b => b.title.trim().toLowerCase()).filter(Boolean));
+
+  const unfinished = prevMonthData.books.filter(b => !b.completed && b.title.trim() !== "");
+  const added: string[] = [];
+
+  const makeContinuation = (prev: typeof unfinished[number]) => ({
+    id: Math.random().toString(36).substring(2, 9),
+    title: prev.title,
+    author: prev.author,
+    completed: false,
+    totalPages: prev.totalPages,
+    currentPage: prev.currentPage,
+    startingPage: prev.currentPage,
+    notes: "",
+    aiScore: prev.aiScore,
+    intro: prev.intro,
+    readingAdvice: prev.readingAdvice,
+    scoreExplanation: prev.scoreExplanation,
+  });
+
+  // Find blank slots (no title, not completed)
+  const blankIndices: number[] = [];
+  currentBooks.forEach((b, i) => {
+    if (!b.title.trim() && !b.completed) blankIndices.push(i);
+  });
+
+  for (const prev of unfinished) {
+    if (currentTitles.has(prev.title.trim().toLowerCase())) continue;
+    const cont = makeContinuation(prev);
+    if (blankIndices.length > 0) {
+      // Replace a blank slot
+      const idx = blankIndices.shift()!;
+      currentBooks[idx] = cont;
+    } else {
+      // Add as extra
+      currentBooks.push(cont);
+    }
+    added.push(prev.title);
+  }
+
+  if (added.length > 0) {
+    await saveDB(db);
+    revalidatePath("/");
+  }
+  return added;
+}
+
 // Action: Copy book from previous month
 export async function copyBookFromPreviousMonth(playerId: string, month: number, bookIndex: number) {
   const db = await loadDB();

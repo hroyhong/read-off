@@ -42,7 +42,7 @@ export function EditableText({ initialValue, onSave, placeholder, className }: E
         onChange={(e) => setDraft(e.target.value)}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        className={`bg-transparent border-b border-black/10 w-full ${className}`}
+        className={`bg-transparent border-b border-ink/10 w-full ${className}`}
         placeholder={placeholder}
       />
     );
@@ -57,7 +57,7 @@ export function EditableText({ initialValue, onSave, placeholder, className }: E
         setDraft(initialValue ?? "");
         setIsEditing(true);
       }} 
-      className={`cursor-pointer hover:bg-gray-50 rounded px-1 -mx-1 truncate ${isEmpty ? "text-gray-300" : ""} ${className}`}
+      className={`cursor-pointer hover:bg-surface rounded px-1 -mx-1 truncate ${isEmpty ? "text-ink-3" : ""} ${className}`}
     >
       {isEmpty ? placeholder : initialValue}
     </div>
